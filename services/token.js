@@ -1,49 +1,44 @@
-var jwt = require('jsonwebtoken'),
-  tokenConfig = app.get('token')
+const jwt = require('jsonwebtoken')
+const tokenConfig = app.get('token')
 
-var extractRegex = /(\S+)\s+(\S+)/
+const extractRegex = /^(\S+)\s+(\S+)$/
 
-var tokenService = module.exports = {
+const tokenService = {
 
   /**
    * 从 auth 头部提取 token
    */
   extractTokenFromHeader (req) {
 
-    return Promise.resolve()
-      .then(function () {
-        var authorization = req.get(tokenConfig.headerField)
-        if (!authorization) { throw Error('No Authorization Header') }
-        return authorization
-      })
-      .then(function (headerValue) {
-        var matches = headerValue.match(extractRegex)
-        if (!matches) { throw Error('Invalid Authorization Header') }
-        return {
-          scheme: matches[1],
-          value: matches[2],
-        }
-      })
-      .then(function (headerParams) {
-        if (headerParams.scheme == tokenConfig.headerScheme)          { return headerParams.value }
-        throw Error('Invalid Authorization Scheme')
-      })
+    const authorization = req.get(tokenConfig.headerField)
+    if (!authorization) {
+      return log.verbose('No Authorization Header')
+    }
+
+    const matches = authorization.match(extractRegex)
+    if (!matches) {
+      return log.verbose('Invalid Authorization Header')
+    }
+
+    const [ , schema, value ] = matches
+    if (schema !== tokenConfig.headerScheme) {
+      return log.verbose('Invalid Authorization Scheme')
+    }
+    return value
   },
 
   /**
    * 产生 access token
    */
   createAccessToken (user) {
-    var _config = tokenConfig.types.access
     return jwt.sign(
       {
         user: user._id,
-        type: _config.typename,
       },
       tokenConfig.secret,
       {
         algorithm: tokenConfig.algorithm,
-        expiresIn: _config.expires,
+        expiresIn: tokenConfig.expires,
         // issuer: tokenConfig.issuer,
         // audience: tokenConfig.audience
       }
@@ -54,97 +49,14 @@ var tokenService = module.exports = {
    * 验证 access token
    */
   verifyAccessToken (token) {
-    var _config = tokenConfig.types.access
-    return new Promise(function (resolve, reject) {
-      jwt.verify(token, tokenConfig.secret, function (err, decoded) {
+    return new Promise((resolve, reject) => {
+      jwt.verify(token, tokenConfig.secret, (err, decoded) => {
         if (err) { return reject(err) }
-        if (decoded.type != _config.typename) { return reject(Error('Not Access Token')) }
         resolve(decoded)
       })
     })
-  },
-
-  /**
-   * 产生 refresh token
-   */
-  createRefreshToken (user) {
-    var _config = tokenConfig.types.refresh
-    return jwt.sign(
-      {
-        user,
-        type: _config.typename,
-      },
-      tokenConfig.secret,
-      {
-        algorithm: tokenConfig.algorithm,
-        expiresIn: _config.expires,
-        // issuer: tokenConfig.issuer,
-        // audience: tokenConfig.audience
-      }
-    )
-  },
-
-  /**
-   * 验证 refresh token
-   */
-  verifyRefreshToken (token) {
-    var _config = tokenConfig.types.refresh
-    return new Promise(function (resolve, reject) {
-      jwt.verify(token, tokenConfig.secret, function (err, decoded) {
-        if (err) { return reject(err) }
-        if (decoded.type != _config.typename) { return reject(Error('Not Refresh Token')) }
-        resolve(decoded)
-      })
-    })
-  },
-
-  /**
-   * 创建 invitation token
-   */
-  createInvitationToken (sender, receiver, message) {
-    var _config = tokenConfig.types.invitation
-    return jwt.sign(
-      {
-        sender,
-        receiver,
-        message,
-        type: _config.typename,
-      },
-      tokenConfig.secret,
-      {
-        algorithm: tokenConfig.algorithm,
-        expiresIn: _config.expires,
-        // issuer: tokenConfig.issuer,
-        // audience: tokenConfig.audience
-      }
-    )
-  },
-
-  /**
-   * 验证 invitation token
-   */
-  verifyInvitationToken (token) {
-    var _config = tokenConfig.types.invitation
-    return new Promise(function (resolve, reject) {
-      jwt.verify(token, tokenConfig.secret, function (err, decoded) {
-        if (err) { return reject(err) }
-        if (decoded.type != _config.typename) { return reject(Error('Not Invitation Token')) }
-        resolve(decoded)
-      })
-    })
-  },
-
-  /**
-   * 使用 refresh token 获取更新的 accessToken 和 refreshToken
-   */
-  refreshToken (token) {
-    return tokenService.verifyRefreshToken(token)
-      .then(function (decoded) {
-        return {
-          accessToken: tokenService.createAccessToken(decoded.user),
-          refreshToken: tokenService.createRefreshToken(decoded.user),
-        }
-      })
   },
 
 }
+
+module.exports = tokenService

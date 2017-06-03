@@ -1,10 +1,6 @@
 module.exports.token = {
 
-  types: {
-    access: {
-      expires: '2h',
-    },
-  },
+  expires: '2h',
 
   secret: '22588c157798ef5a0462d33a670cab23', // random key
 

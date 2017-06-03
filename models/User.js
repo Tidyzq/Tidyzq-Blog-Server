@@ -12,18 +12,45 @@ class User {
     this.avatar = data.avatar || ''
   }
 
-  static init () {
+  static createTable () {
     return new Promise((resolve, reject) => {
       app.sqlite.run(`CREATE TABLE IF NOT EXISTS Users (
         id       INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT    NOT NULL,
         password TEXT    NOT NULL,
-        email    TEXT    NOT NULL,
+        email    TEXT    UNIQUE NOT NULL,
         avatar   TEXT    NOT NULL
-      )`, err => {
+      )`,
+      err => {
         err ? reject(err) : resolve()
       })
     })
+  }
+
+  static createIndex (name, fields) {
+    return new Promise((resolve, reject) => {
+      app.sqlite.run(`CREATE INDEX ${name}
+        ON Users (${fields.join(',')})`,
+      err => {
+        err ? reject(err) : resolve()
+      })
+    })
+  }
+
+  static createIndexes () {
+    const indexes = [{
+      name: 'Idx_Users_email',
+      fields: [ 'email' ],
+    }]
+
+    return Promise.all(_.map(indexes, ({ name, fields }) => this.createIndex(name, fields)))
+  }
+
+  static init () {
+
+    return this.createTable()
+      .then(() => this.createIndexes())
+
   }
 
   beforeCreate () {
@@ -98,7 +125,7 @@ class User {
     const params = _.concat(select.params, where.params, sort.params)
     return new Promise((resolve, reject) => {
       app.sqlite.get(sql, params, (err, row) => {
-        err ? reject(err) : resolve(new User(row))
+        err ? reject(err) : resolve(row && new User(row))
       })
     })
   }
@@ -140,13 +167,17 @@ class User {
     })
   }
 
-  toString () {
-    return JSON.stringify({
+  toJSON () {
+    return {
       id: this.id,
       username: this.username,
       email: this.email,
       avatar: this.avatar,
-    })
+    }
+  }
+
+  toString () {
+    return JSON.stringify(this)
   }
 
 }

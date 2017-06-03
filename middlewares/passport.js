@@ -1,74 +1,64 @@
-var passport = require('passport'),
-  localStrategy = require('passport-local').Strategy,
-    // jwtStrategy = require('passport-jwt').Strategy,
-    // extractJwt = require('passport-jwt').ExtractJwt,
-  bcrypt = require('bcrypt')
+const passport = require('passport')
+const localStrategy = require('passport-local').Strategy
+const jwtStrategy = require('passport-jwt').Strategy
+const bcrypt = require('bcrypt')
 
-// var passportConfig = app.get('passport');
+const tokenConfig = app.get('token')
+const jwtFromRequest = app.services.token.extractTokenFromHeader
 
-passport.serializeUser(function (user, done) {
-  done(null, user._id)
+passport.serializeUser((user, done) => {
+  done(null, user.id)
 })
 
-passport.deserializeUser(function (id, done) {
-  app.models.User.findOne({ _id: id }, function (err, user) {
-    done(err, user)
-  })
+passport.deserializeUser((id, done) => {
+  app.models.user.findOne({ id })
+    .then(user => done(null, user))
+    .catch(err => done(err))
 })
 
 passport.use(new localStrategy(
   {
-    usernameField: 'username',
+    usernameField: 'email',
     passwordField: 'password',
   },
-  function (username, password, done) {
+  (email, password, done) => {
 
-    app.models.User.findOne({ username })
-      .select('+password')
-      .lean()
+    app.models.user.findOne({ email })
       // 检查用户是否存在
-      .then(function (user) {
-        if (!user)          { throw new Error('No Such User.') }
+      .then(user => {
+        if (!user) { throw new Error('No Such User.') }
         return user
       })
       // 检查用户密码是否正确
-      .then(function (user) {
+      .then(user => {
         return bcrypt.compare(password, user.password)
-          .then(function (res) {
-            if (!res)              { throw new Error('Invalid Password.') }
+          .then(result => {
+            if (!result) { throw new Error('Invalid Password.') }
             return user
           })
       })
       // 验证完成，返回用户信息
-      .then(function (user) {
-        delete user.password
-        done(null, user)
-      })
+      .then(user => done(null, user))
       // 验证失败，返回错误信息
-      .catch(function (err) {
-        done(err)
-      })
+      .catch(done)
   }
 ))
 
-// passport.use(new jwtStrategy(
-//   {
-//     secretOrKey: passportConfig.jwt.secret,
-//     jwtFromRequest: passportConfig.jwt.extractor,
-//   }, function (payload, done) {
-//     var id = payload.user;
-//     app.models.User.findOne({ _id: id })
-//       .then(function (user) {
-//         if (!user)
-//           throw new Error('No Such User.');
-//         return user;
-//       })
-//       .then(function (user) {
-//         done(null, user, {});
-//       })
-//       .catch(done);
-//     // done(null, user, {});
-//   }
-// ));
+passport.use(new jwtStrategy(
+  {
+    secretOrKey: tokenConfig.secret,
+    jwtFromRequest,
+    algorithm: tokenConfig.algorithm,
+  },
+  ({ id }, done) => {
+    app.models.user.findOne({ id })
+      .then(user => {
+        if (!user) { throw new Error('No Such User.') }
+        return user
+      })
+      .then(user => done(null, user))
+      .catch(done)
+  }
+))
 
 module.exports = passport.initialize()
