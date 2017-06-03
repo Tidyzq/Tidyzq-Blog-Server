@@ -2,10 +2,10 @@ module.exports.globals = {
 
   app: true,
 
-  promise: true,
+  Promise: true,
 
   log: true,
 
-  lodash: true,
+  _: true,
 
 }

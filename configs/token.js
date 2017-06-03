@@ -2,16 +2,7 @@ module.exports.token = {
 
   types: {
     access: {
-      typename: 0,
       expires: '2h',
-    },
-    refresh: {
-      typename: 1,
-      expires: '7d',
-    },
-    invitation: {
-      typename: 2,
-      expires: '2d',
     },
   },
 

@@ -4,7 +4,7 @@ const http = require('http')
 
 const Promise = require('bluebird')
 const _ = require('lodash')
-const includeAll = Promise.promisifyAll(require('include-all'))
+const includeAll = require('include-all')
 const sqlite = require('sqlite3').verbose()
 
 const CWD = process.cwd()
@@ -20,10 +20,14 @@ class App {
     this.app.set('path', process.cwd())
 
     // load custom configs
-    const customConfigs = includeAll.aggregate({
-      dirname: path.join(CWD, 'configs'),
-      excludeDirs: /^env$/,
-      filter: /(.+)\.js$/,
+    const customConfigs = new Promise((resolve, reject) => {
+      includeAll.aggregate({
+        dirname: path.join(CWD, 'configs'),
+        excludeDirs: /^env$/,
+        filter: /(.+)\.js$/,
+      }, (err, modules) => {
+        err ? reject(err) : resolve(modules)
+      })
     })
 
     // load env configs
@@ -57,7 +61,7 @@ class App {
   loadConfigFromDirectory (dirname) {
     return includeAll({
       dirname: path.join(CWD, dirname),
-      filter: /(.+)\.js$/,
+      filter: /^(?!\.)(.+)\.js$/,
     })
   }
 
@@ -93,13 +97,13 @@ class App {
     if (globalConfig.app) {
       global.app = this.app
     }
-    if (globalConfig.promise) {
+    if (globalConfig.Promise) {
       global.Promise = Promise
     }
     if (globalConfig.log) {
       global.log = this.app.log
     }
-    if (globalConfig.lodash) {
+    if (globalConfig._) {
       global._ = _
     }
     return globalConfig
@@ -166,19 +170,31 @@ class App {
     //   })
   }
 
-  loadHttp () {
+  initDatabase () {
+    const models = this.app.models || {}
+
+    return Promise.all(_.map(models, (model, modelName) => {
+      if (_.isFunction(model.init)) {
+        return model.init()
+      } else {
+        this.app.log.warn(`App.initDatabse :: model ${modelName}.init method not found`)
+      }
+    }))
+  }
+
+  mountMiddlewares () {
     const middlewareOrder = this.app.get('http').middlewares || [],
       middlewares = this.app.middlewares || {},
       installed = []
 
     for (const middlewareName of middlewareOrder) {
       if (_.has(middlewares, middlewareName)) {
-        this.app.log.silly('App.loadHttp :: middleware', middlewareName, 'installed')
+        this.app.log.silly(`App.mountMiddlewares :: middleware ${middlewareName} installed`)
         const middleware = middlewares[middlewareName]
         this.app.use(middleware)
         installed.push(middlewareName)
       } else {
-        this.app.log.warn('App.loadHttp :: middleware', middlewareName, 'not found')
+        this.app.log.warn(`App.mountMiddlewares :: middleware' ${middlewareName} not found`)
       }
     }
     return Promise.resolve(installed)
@@ -226,17 +242,17 @@ class App {
   }
 
   start (overrideConfig) {
-    var app = this
-    return app.loadConfigs(overrideConfig)
-      .then(function () { return app.loadComponents() })
-      .then(function () { return app.loadGlobals() })
-      .then(function () { return app.loadModels() })
-      .then(function () { return app.loadServices() })
-      .then(function () { return app.loadControllers() })
-      .then(function () { return app.loadMiddlewares() })
-      .then(function () { return app.connectDatabase() })
-      .then(function () { return app.loadHttp() })
-      .then(function () { return app.startServer() })
+    return this.loadConfigs(overrideConfig)
+      .then(() => this.loadComponents() )
+      .then(() => this.loadGlobals() )
+      .then(() => this.loadModels() )
+      .then(() => this.loadServices() )
+      .then(() => this.loadControllers() )
+      .then(() => this.loadMiddlewares() )
+      .then(() => this.connectDatabase() )
+      .then(() => this.initDatabase() )
+      .then(() => this.mountMiddlewares() )
+      .then(() => this.startServer() )
   }
 }
 

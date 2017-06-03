@@ -1,4 +1,4 @@
-var passport = require('passport')
+const passport = require('passport')
 
 module.exports = {
 
@@ -6,16 +6,16 @@ module.exports = {
    * 检查请求是否附带了合法的 access token
    */
   hasAccessToken (req, res, next) {
-    var tokenService = app.services.token
+    const tokenService = app.services.token
 
     tokenService.extractTokenFromHeader(req)
       .then(tokenService.verifyAccessToken)
-      .then(function (decoded) {
+      .then(decoded => {
         req.user = decoded.user
         next()
       })
-      .catch(function (err) {
-        log.verbose('AuthController::hasAccessToken', err.message)
+      .catch(err => {
+        log.verbose(`AuthController::hasAccessToken ${err.message}`)
         res.unauthorized(err.message)
       })
   },
