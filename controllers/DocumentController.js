@@ -11,7 +11,7 @@ module.exports = {
 
     Document.findOne({ id })
       .then(document => {
-        if (!document || !req.user || req.user.id !== document.id) {
+        if (!document || !req.user || req.user.id !== document.author) {
           throw new Error('not author.')
         }
       })
@@ -33,7 +33,11 @@ module.exports = {
       $sort: req.query.sort,
     })
     .then(documents => {
-      res.ok(documents)
+      return Document.count(req.query.where)
+        .then(count => {
+          res.set('X-Total-Count', count)
+          res.ok(documents)
+        })
     })
     .catch(err => {
       log.verbose(`Document.getDocuments :: ${err}`)
@@ -86,7 +90,7 @@ module.exports = {
       })
       .catch(err => {
         log.verbose(`DocumentController.createDocument :: ${err}`)
-        res.notFound(err.message)
+        res.badRequest(err.message)
       })
   },
 
@@ -141,6 +145,31 @@ module.exports = {
         log.verbose(`DocumentController.deleteDocumentById :: ${err}`)
         res.badRequest(err.message)
       })
+  },
+
+  /**
+   * 获取用户文章
+   */
+  getDocumentsByUser (req, res, next) {
+    const id = req.params.id
+
+    Document.find({
+      $where: { author: id },
+      $limit: req.query.limit,
+      $offset: req.query.offset,
+      $sort: req.query.sort,
+    })
+    .then(documents => {
+      return Document.count({ author: id })
+        .then(count => {
+          res.set('X-Total-Count', count)
+          res.ok(documents)
+        })
+    })
+    .catch(err => {
+      log.verbose(`UserController.getDocuments :: ${err}`)
+      res.badRequest(err.message)
+    })
   },
 
 }

@@ -29,12 +29,19 @@ function splitFields (fields) {
 function solveFields (fields, splited) {
   splited = splited || splitFields(fields)
   const { keys, foreigns } = splited
+  const params = []
 
   const columnStates = _.map(fields, (field, fieldName) => {
     field = _.isString(field) ? { type: field } : field
     field.notNull = field.notNull ? 'NOT NULL' : ''
     field.unique = field.unique ? 'UNIQUE' : ''
-    return `${fieldName} ${field.type} ${field.unique} ${field.notNull}`
+    if (!_.isUndefined(field.default) && !_.isNull(field.default)) {
+      // params.push(field.default)
+      field.default = `DEFAULT ${field.default}`
+    } else {
+      field.default = ''
+    }
+    return `${fieldName} ${field.type} ${field.unique} ${field.notNull} ${field.default}`
   })
 
   const keysState = `PRIMARY KEY (${_.keys(keys).join(',')})`
@@ -44,24 +51,26 @@ function solveFields (fields, splited) {
     return `FOREIGN KEY (${fieldName}) REFERENCES ${table} (${column})`
   })
 
-  return _.concat(columnStates, keysState, foreignsState).join(',\n')
+  const sql = _.concat(columnStates, keysState, foreignsState).join(',\n')
+
+  return {
+    sql,
+    params,
+  }
 }
 
 function solveColumnAndValue (fields, items) {
-  const itemFields = _.union.apply(_, _.map(items, _.keys))
-  const columns = _.intersection(fields, itemFields)
-
-  const sqlPlaceholder = _.fill(Array(columns.length), '?').join(',')
+  const sqlPlaceholder = _.fill(Array(fields.length), '?').join(',')
   const valueSql = _.fill(Array(items.length), `(${sqlPlaceholder})`).join(',')
   const valueParams = _.reduce(items, (result, item) => {
-    for (const column of columns) {
+    for (const column of fields) {
       result.push(item[column])
     }
     return result
   }, [])
 
   return {
-    columns: `(${columns.join(',')})`,
+    columns: `(${fields.join(',')})`,
     values: {
       sql: valueSql,
       params: valueParams,
@@ -86,7 +95,7 @@ function _solveWhereInner (fields, where, params = []) {
   }
   if (where.$op) {
     const op = where.$op.toLowerCase() === 'or' ? ' OR ' : ' AND '
-    result = _.map(where.$conditions, item => _solveWhereInner(fields, item, params).sql).join(op)
+    result = _.map(_.compact(where.$conditions), item => _solveWhereInner(fields, item, params).sql).join(op)
   } else {
     result = _.map(_.pick(where, fields), (value, key) => {
       let op = '='
@@ -137,7 +146,7 @@ function solveSort (fields, sort) {
 
 function solveQuery (fields, query) {
   let { $select: select, $where: where, $limit: limit, $offset: offset, $sort: sort } = query
-  if (!select && !where && !limit && !offset && !sort) {
+  if (!_.has(query, '$where')) {
     where = query
   }
   select = solveSelect(fields, select)
@@ -165,7 +174,7 @@ function solveSet (fields, set) {
 
 function defineModel (tableName, options) {
   /* eslint-disable no-eval */
-  const { fields, indexes, methods } = options
+  const { fields, indexes, methods, staticMethods } = options
 
   const { keys, foreigns } = splitFields(fields)
 
@@ -181,7 +190,7 @@ function defineModel (tableName, options) {
     this.assign(data)
   }
 
-  var tmp
+  eval('var tmp')
 
   /**
    * mode.prototype.assign
@@ -200,12 +209,13 @@ function defineModel (tableName, options) {
   model.init = function () {
     return new Promise((resolve, reject) => {
       // create table
+      const fieldStates = solveFields(fields, { keys, foreigns })
       const sql = `CREATE TABLE IF NOT EXISTS ${tableName} (
-        ${
-          solveFields(fields, { keys, foreigns })
-        }
+        ${fieldStates.sql}
       )`
-      app.sqlite.run(sql,
+      const params = fieldStates.params
+      app.log.silly(sql, params)
+      app.sqlite.run(sql, params,
       err => {
         err ? reject(err) : resolve()
       })
@@ -218,6 +228,7 @@ function defineModel (tableName, options) {
             const sql = `CREATE INDEX IF NOT EXISTS ${name} ON ${tableName} (
               ${fields.join(',')}
             )`
+            app.log.silly(sql)
             app.sqlite.run(sql, err => {
               err ? reject(err) : resolve()
             })
@@ -235,6 +246,7 @@ function defineModel (tableName, options) {
 
     const sql = `SELECT ${select.sql} FROM ${tableName} ${where.sql} ${sort.sql} ${limit.sql} ${offset.sql}`
     const params = _.concat(select.params, where.params, sort.params, limit.params, offset.params)
+    app.log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.all(sql, params, (err, rows) => {
         err ? reject(err) : resolve(_.map(rows, row => new model(row)))
@@ -250,6 +262,7 @@ function defineModel (tableName, options) {
 
     const sql = `SELECT ${select.sql} FROM ${tableName} ${where.sql} ${sort.sql}`
     const params = _.concat(select.params, where.params, sort.params)
+    app.log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.get(sql, params, (err, row) => {
         err ? reject(err) : resolve(row && new model(row))
@@ -265,6 +278,7 @@ function defineModel (tableName, options) {
 
     const sql = `SELECT COUNT(*) FROM ${tableName} ${where.sql}`
     const params = where.params
+    app.log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.get(sql, params, (err, row) => {
         err ? reject(err) : resolve(row['COUNT(*)'])
@@ -280,6 +294,7 @@ function defineModel (tableName, options) {
 
     const sql = `DELETE FROM ${tableName} ${where.sql}`
     const params = where.params
+    app.log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.run(sql, params, function (err) {
         err ? reject(err) : resolve(this.changes)
@@ -296,6 +311,7 @@ function defineModel (tableName, options) {
 
     const sql = `UPDATE ${tableName} SET ${set.sql} ${where.sql}`
     const params = _.concat(set.params, where.params)
+    app.log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.run(sql, params, function (err) {
         err ? reject(err) : resolve(this.changes)
@@ -311,6 +327,7 @@ function defineModel (tableName, options) {
 
     const sql = `INSERT INTO ${tableName} ${columns} VALUES ${values.sql}`
     const params = values.params
+    app.log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.run(sql, params, function (err) {
         err ? reject(err) : resolve(this.lastID)
@@ -371,6 +388,8 @@ function defineModel (tableName, options) {
     return JSON.stringify(this)
   }
 
+  _.assign(model, staticMethods)
+
   model.prototype = _.create(Model.prototype, _.assign({
     constructor: model,
     assign,
@@ -379,7 +398,7 @@ function defineModel (tableName, options) {
     destroy,
     toJSON,
     toString,
-  }), methods)
+  }, methods))
 
   return model
 }

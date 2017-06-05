@@ -22,10 +22,6 @@ module.exports.http = {
   ],
 
   routes: {
-    '/': {
-      get: 'IndexController.index',
-    },
-
     '/api': {
       '/auth': {
         '/register': {
@@ -40,19 +36,33 @@ module.exports.http = {
           get: [ 'UserController.getUserById' ],
           put: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.updateUserById' ],
           '/documents': {
-            get: [ 'UserController.getDocumentsByUser' ],
+            get: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.getDocumentsByUser' ],
           },
+          // '/posts': {
+          //   get: [ 'UserController.getPostsByUser' ],
+          // },
         },
       },
       '/documents': {
-        get: [ 'DocumentController.getDocuments' ],
         post: [ 'AuthController.hasAccessToken', 'DocumentController.createDocument' ],
         '/:id': {
-          get: [ 'DocumentController.getDocumentById' ],
-          put: [ 'DocumentController.isAuthor', 'DocumentController.updateDocumentById' ],
-          delete: [ 'DocumentController.isAuthor', 'DocumentController.deleteDocumentById' ],
+          get: [ 'AuthController.hasAccessToken', 'DocumentController.isAuthor', 'DocumentController.getDocumentById' ],
+          put: [ 'AuthController.hasAccessToken', 'DocumentController.isAuthor', 'DocumentController.updateDocumentById' ],
+          delete: [ 'AuthController.hasAccessToken', 'DocumentController.isAuthor', 'DocumentController.deleteDocumentById' ],
         },
       },
+      // '/posts': {
+      //   get: [ 'PostController.getPosts' ],
+      //   '/url/:url': {
+      //     get: [ 'PostController.getPostByUrl' ],
+      //   },
+      //   '/id/:id': {
+      //     get: [ 'PostController.getPostById' ],
+      //   },
+      // },
+      // '/pages/url/:url': {
+      //   get: [ 'PageController.getPageByUrl' ],
+      // },
     },
   },
 
