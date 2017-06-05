@@ -35,43 +35,24 @@ module.exports.http = {
           post: 'AuthController.login',
         },
       },
-      // '/users': {
-      //   '/search': {
-      //     get: 'UserController.search',
-      //   },
-      //   '/:id': {
-      //     get: [ 'AuthController.hasAccessToken', 'UserController.findUser' ],
-      //     put: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.update' ],
-      //     '/avatar': {
-      //       post: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.uploadAvatar' ],
-      //     },
-      //     '/contacts': {
-      //       get: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.getContacts' ],
-      //       post: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.addContact' ],
-      //       '/count': {
-      //         get: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.countContacts' ],
-      //       },
-      //       '/:cid': {
-      //         get: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.getContact' ],
-      //         put: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.updateContact' ],
-      //         delete: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.deleteContact' ],
-      //       },
-      //     },
-      //     '/invitation': {
-      //       post: [ 'AuthController.hasAccessToken', 'UserController.hasUser', 'UserController.sendInvitation' ],
-      //       '/accept': {
-      //         post: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.acceptInvitation' ],
-      //       },
-      //     },
-      //     // '/messages': {
-      //     //   get: ['AuthController.hasJwt', 'UserController.isSelf', 'MessageController.receive'],
-      //     // },
-      //   },
-      // },
-      // '/messages': {
-      //   get: ['AuthController.hasJwt', 'MessageController.receive'],
-      //   post: ['AuthController.hasJwt', 'MessageController.send'],
-      // },
+      '/users': {
+        '/:id': {
+          get: [ 'UserController.getUserById' ],
+          put: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.updateUserById' ],
+          '/documents': {
+            get: [ 'UserController.getDocumentsByUser' ],
+          },
+        },
+      },
+      '/documents': {
+        get: [ 'DocumentController.getDocuments' ],
+        post: [ 'AuthController.hasAccessToken', 'DocumentController.createDocument' ],
+        '/:id': {
+          get: [ 'DocumentController.getDocumentById' ],
+          put: [ 'DocumentController.isAuthor', 'DocumentController.updateDocumentById' ],
+          delete: [ 'DocumentController.isAuthor', 'DocumentController.deleteDocumentById' ],
+        },
+      },
     },
   },
 

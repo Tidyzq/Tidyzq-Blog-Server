@@ -33,6 +33,7 @@ class App {
     // load env configs
     const envConfigs = includeAll({
       dirname: path.join(CWD, 'configs', 'env'),
+      filter: /(.+)\.js$/,
     })
 
     overrideConfigs = overrideConfigs || {}
@@ -44,11 +45,11 @@ class App {
         overrideConfigs,
       })
       .then(configs => {
-        const env = configs.overrideConfigs.env || configs.customConfigs.env || this.app.get('env')
+        const env = process.env.NODE_ENV || 'development'
         // select env config
-        configs.envConfigs = configs.envConfigs[env]
+        configs.env = configs.envConfigs[env]
         // merge configs
-        configs = _.merge(configs.customConfigs, configs.envConfigs, configs.overrideConfigs)
+        configs = _.merge(configs.customConfigs, configs.env, configs.overrideConfigs)
         // apply config settings
         for (var moduleName in configs) {
           this.app.set(moduleName, configs[moduleName])

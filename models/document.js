@@ -1,62 +1,78 @@
-// const Promise = require('bluebird')
-// const Model = require('./model')
-// const bcrypt = Promise.promisifyAll(require('bcrypt'))
 const { defineModel } = require('../utils/modelHelper')
 
-module.exports = defineModel('Users', {
+module.exports = defineModel('Documents', {
   fields: {
     id: {
       type: 'INTEGER',
+      notNull: true,
       key: true,
       autoincrement: true,
     },
-    username: {
+    title: {
       type: 'TEXT',
       notNull: true,
     },
-    password: {
+    url: {
       type: 'TEXT',
       notNull: true,
-      hide: true,
-    },
-    email: {
-      type: 'TEXT',
       unique: true,
-      notNull: true,
     },
-    avatar: {
+    markdown: {
       type: 'TEXT',
       notNull: true,
+    },
+    modifiedAt: {
+      type: 'DATETIME',
+      notNull: true,
+    },
+    createdAt: {
+      type: 'DATETIME',
+      notNull: true,
+    },
+    author: {
+      type: 'INTEGER',
+      notNull: true,
+      foreign: 'Users.id',
     },
   },
   indexes: [{
-    name: 'Idx_Users_email',
-    fields: [ 'email' ],
+    name: 'Idx_Documents_url',
+    fields: [ 'url' ],
+  }, {
+    name: 'Idx_Documents_author',
+    fields: [ 'author' ],
   }],
 })
 
-// class User extends Model {
+// class Document extends Model {
 
 //   constructor (data) {
 //     super()
 //     this.id = data.id
-//     this.username = data.username
-//     this.password = data.password
-//     this.email = data.email || ''
-//     this.avatar = data.avatar || ''
+//     this.title = data.title
+//     this.url = data.url
+//     this.markdown = data.markdown
+//     this.modifiedAt = data.modifiedAt
+//     this.createdAt = data.createdAt
+//     this.author = data.author
 //   }
 
 //   static createTable () {
 //     return new Promise((resolve, reject) => {
-//       app.sqlite.run(`CREATE TABLE IF NOT EXISTS Users (
-//         id       INTEGER PRIMARY KEY AUTOINCREMENT,
-//         username TEXT    NOT NULL,
-//         password TEXT    NOT NULL,
-//         email    TEXT    UNIQUE NOT NULL,
-//         avatar   TEXT    NOT NULL
+//       app.sqlite.run(`CREATE TABLE IF NOT EXISTS Documents (
+//         id         INTEGER  PRIMARY KEY AUTOINCREMENT,
+//         title      TEXT     NOT NULL,
+//         url        TEXT     UNIQUE NOT NULL,
+//         markdown   TEXT     NOT NULL,
+//         modifiedAt DATETIME NOT NULL,
+//         createdAt  DATETIME NOT NULL,
+//         author     INTEGER  REFERENCES Users(id) ON DELETE CASCADE
 //       );
-//       CREATE INDEX IF NOT EXISTS Idx_Users_email ON Users (
-//         email
+//       CREATE INDEX IF NOT EXISTS Idx_Documents_url ON Documents (
+//         url
+//       );
+//       CREATE INDEX IF NOT EXISTS Idx_Documents_author ON Documents (
+//         author
 //       );`,
 //       err => {
 //         err ? reject(err) : resolve()
@@ -65,17 +81,22 @@ module.exports = defineModel('Users', {
 //   }
 
 //   static init () {
-
 //     return this.createTable()
-
 //   }
 
 //   beforeCreate () {
-//     return bcrypt.genSalt(10)
-//       .then(salt => bcrypt.hash(this.password, salt))
-//       .then(hash => {
-//         this.password = hash
-//         log.verbose('UserModel :: encrypting succeed')
+//     return Promise.resolve()
+//       .then(() => {
+//         if (_.isUndefined(this.url)) {
+//           return generateUrl(Document, this.title)
+//             .then(url => {
+//               this.url = url
+//               log.verbose(`DocumentModel :: generated url ${url}`)
+//             })
+//         }
+//       })
+//       .then(() => {
+//         this.createdAt = this.modifiedAt = new Date()
 //       })
 //   }
 
@@ -83,14 +104,14 @@ module.exports = defineModel('Users', {
 //     return this.beforeCreate()
 //       .then(() => {
 //         return new Promise((resolve, reject) => {
-//           app.sqlite.run(`INSERT INTO Users (
-//               username, password, email, avatar
+//           app.sqlite.run(`INSERT INTO Documents (
+//               title, url, markdown, modifiedAt, createdAt, author
 //             ) VALUES (
-//               ?, ?, ?, ?
+//               ?, ?, ?, ?, ?, ?
 //             )`,
-//             [ this.username, this.password, this.email, this.avatar ],
-//             err => {
-//               err ? reject(err) : resolve()
+//             [ this.title, this.url, this.markdown, this.modifiedAt, this.createdAt, this.author ],
+//             function (err) {
+//               err ? reject(err) : resolve(this.lastID)
 //             })
 //         })
 //       })
@@ -98,12 +119,15 @@ module.exports = defineModel('Users', {
 
 //   update () {
 //     const set = solveSet({
-//       username: this.username,
-//       email: this.email,
-//       avatar: this.avatar,
+//       title: this.title,
+//       url: this.url,
+//       markdown: this.markdown,
+//       modifiedAt: this.modifiedAt,
+//       createdAt: this.createdAt,
+//       author: this.author,
 //     })
 
-//     const sql = `UPDATE Users SET ${set.sql} WHERE id = ?`
+//     const sql = `UPDATE Documents SET ${set.sql} WHERE id = ?`
 //     const params = _.concat(set.params, this.id)
 //     return new Promise((resolve, reject) => {
 //       app.sqlite.run(sql, params,
@@ -115,7 +139,7 @@ module.exports = defineModel('Users', {
 
 //   delete () {
 //     return new Promise((resolve, reject) => {
-//       app.sqlite.run('DELETE FROM Users WHERE id = ?',
+//       app.sqlite.run('DELETE FROM Documents WHERE id = ?',
 //       [ this.id ],
 //       err => {
 //         err ? reject(err) : resolve()
@@ -126,11 +150,12 @@ module.exports = defineModel('Users', {
 //   static find (query) {
 //     const { select, where, sort, limit, offset } = solveQuery(query)
 
-//     const sql = `SELECT ${select.sql} FROM Users ${where.sql} ${sort.sql} ${limit.sql} ${offset.sql}`
+//     const sql = `SELECT ${select.sql} FROM Documents ${where.sql} ${sort.sql} ${limit.sql} ${offset.sql}`
 //     const params = _.concat(select.params, where.params, sort.params, limit.params, offset.params)
+//     console.log(sql, params)
 //     return new Promise((resolve, reject) => {
 //       app.sqlite.all(sql, params, (err, rows) => {
-//         err ? reject(err) : resolve(_.map(rows, row => new User(row)))
+//         err ? reject(err) : resolve(_.map(rows, row => new Document(row)))
 //       })
 //     })
 //   }
@@ -138,11 +163,11 @@ module.exports = defineModel('Users', {
 //   static findOne (query) {
 //     const { select, where, sort } = solveQuery(query)
 
-//     const sql = `SELECT ${select.sql} FROM Users ${where.sql} ${sort.sql}`
+//     const sql = `SELECT ${select.sql} FROM Documents ${where.sql} ${sort.sql}`
 //     const params = _.concat(select.params, where.params, sort.params)
 //     return new Promise((resolve, reject) => {
 //       app.sqlite.get(sql, params, (err, row) => {
-//         err ? reject(err) : resolve(row && new User(row))
+//         err ? reject(err) : resolve(row && new Document(row))
 //       })
 //     })
 //   }
@@ -150,7 +175,7 @@ module.exports = defineModel('Users', {
 //   static count (query) {
 //     const { where } = solveQuery(query)
 
-//     const sql = `SELECT COUNT(*) FROM Users ${where.sql}`
+//     const sql = `SELECT COUNT(*) FROM Documents ${where.sql}`
 //     const params = where.params
 //     return new Promise((resolve, reject) => {
 //       app.sqlite.get(sql, params, (err, row) => {
@@ -162,7 +187,7 @@ module.exports = defineModel('Users', {
 //   static delete (where) {
 //     where = solveWhere(where)
 
-//     const sql = `DELETE FROM Users ${where.sql}`
+//     const sql = `DELETE FROM Documents ${where.sql}`
 //     const params = where.params
 //     return new Promise((resolve, reject) => {
 //       app.sqlite.run(sql, params, function (err) {
@@ -175,7 +200,7 @@ module.exports = defineModel('Users', {
 //     where = solveWhere(where)
 //     set = solveSet(set)
 
-//     const sql = `UPDATE Users SET ${set.sql} ${where.sql}`
+//     const sql = `UPDATE Documents SET ${set.sql} ${where.sql}`
 //     const params = _.concat(set.params, where.params)
 //     return new Promise((resolve, reject) => {
 //       app.sqlite.run(sql, params, function (err) {
@@ -185,7 +210,7 @@ module.exports = defineModel('Users', {
 //   }
 
 //   toJSON () {
-//     return _.omit(this, 'password')
+//     return this
 //   }
 
 //   toString () {
@@ -194,4 +219,4 @@ module.exports = defineModel('Users', {
 
 // }
 
-// module.exports = User
+// module.exports = Document

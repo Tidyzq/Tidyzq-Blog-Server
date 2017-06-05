@@ -12,17 +12,20 @@ const tokenService = {
 
     const authorization = req.get(tokenConfig.headerField)
     if (!authorization) {
-      return log.verbose('No Authorization Header')
+      log.verbose('No Authorization Header')
+      return null
     }
 
     const matches = authorization.match(extractRegex)
     if (!matches) {
-      return log.verbose('Invalid Authorization Header')
+      log.verbose('Invalid Authorization Header')
+      return null
     }
 
     const [ , schema, value ] = matches
     if (schema !== tokenConfig.headerScheme) {
-      return log.verbose('Invalid Authorization Scheme')
+      log.verbose('Invalid Authorization Scheme')
+      return null
     }
     return value
   },
@@ -33,7 +36,7 @@ const tokenService = {
   createAccessToken (user) {
     return jwt.sign(
       {
-        user: user._id,
+        id: user.id,
       },
       tokenConfig.secret,
       {

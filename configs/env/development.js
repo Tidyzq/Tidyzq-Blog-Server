@@ -1,5 +1,10 @@
 module.exports = {
   logger: {
-    level: 'silly',
+    level: 'verbose',
   },
+  // connection: {
+  //   sqlite: {
+  //     file: ':memory:',
+  //   },
+  // },
 }

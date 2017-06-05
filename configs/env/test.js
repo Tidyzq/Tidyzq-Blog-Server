@@ -3,6 +3,8 @@ module.exports = {
     level: 'error',
   },
   connection: {
-    mock: true,
+    sqlite: {
+      file: ':memory:',
+    },
   },
 }
