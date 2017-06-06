@@ -27,7 +27,7 @@ module.exports = {
         }
       })
       .then(next)
-      .then(err => {
+      .catch(err => {
         log.verbose(`UserController.hasUser :: ${err}`)
         res.notFound(err.message)
       })

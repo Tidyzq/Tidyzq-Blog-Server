@@ -9,9 +9,9 @@ module.exports = {
    * 检查请求是否附带了合法的 access token
    */
   hasAccessToken (req, res, next) {
-    passport.authenticate('jwt', (err, user) => {
-      if (!user && !err) {
-        err = new Error('No Access Token Provided.')
+    passport.authenticate('jwt', (err, user, fail) => {
+      if (!user && !err && fail) {
+        err = fail
       }
       if (err) {
         log.verbose(`AuthController::hasAccessToken ${err}`)

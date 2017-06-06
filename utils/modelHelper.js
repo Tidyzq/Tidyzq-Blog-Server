@@ -95,7 +95,7 @@ function _solveWhereInner (fields, where, params = []) {
   }
   if (where.$op) {
     const op = where.$op.toLowerCase() === 'or' ? ' OR ' : ' AND '
-    result = _.map(_.compact(where.$conditions), item => _solveWhereInner(fields, item, params).sql).join(op)
+    result = _.compact(_.map(where.$conditions, item => _solveWhereInner(fields, item, params).sql)).join(op)
   } else {
     result = _.map(_.pick(where, fields), (value, key) => {
       let op = '='
@@ -108,7 +108,7 @@ function _solveWhereInner (fields, where, params = []) {
     }).join(' AND ')
   }
   return {
-    sql: `(${result})`,
+    sql: result ? `(${result})` : '',
     params,
   }
 }

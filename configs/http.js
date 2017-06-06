@@ -36,11 +36,11 @@ module.exports.http = {
           get: [ 'UserController.getUserById' ],
           put: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.updateUserById' ],
           '/documents': {
-            get: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.getDocumentsByUser' ],
+            get: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'DocumentController.getDocumentsByUser' ],
           },
-          // '/posts': {
-          //   get: [ 'UserController.getPostsByUser' ],
-          // },
+          '/posts': {
+            get: [ 'UserController.hasUser', 'PostController.getPostsByUser' ],
+          },
         },
       },
       '/documents': {
@@ -51,18 +51,18 @@ module.exports.http = {
           delete: [ 'AuthController.hasAccessToken', 'DocumentController.isAuthor', 'DocumentController.deleteDocumentById' ],
         },
       },
-      // '/posts': {
-      //   get: [ 'PostController.getPosts' ],
-      //   '/url/:url': {
-      //     get: [ 'PostController.getPostByUrl' ],
-      //   },
-      //   '/id/:id': {
-      //     get: [ 'PostController.getPostById' ],
-      //   },
-      // },
-      // '/pages/url/:url': {
-      //   get: [ 'PageController.getPageByUrl' ],
-      // },
+      '/posts': {
+        get: [ 'PostController.getPosts' ],
+        '/url/:url': {
+          get: [ 'PostController.getPostByUrl' ],
+        },
+        '/id/:id': {
+          get: [ 'PostController.getPostById' ],
+        },
+      },
+      '/pages/url/:url': {
+        get: [ 'PageController.getPageByUrl' ],
+      },
     },
   },
 
