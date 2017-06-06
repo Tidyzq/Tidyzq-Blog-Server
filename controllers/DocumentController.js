@@ -1,4 +1,4 @@
-const Document = app.models.document
+const Document = app.models.Document
 const { generateUrl } = require('../utils/urlHelper')
 
 module.exports = {

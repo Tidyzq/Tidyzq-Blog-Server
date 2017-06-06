@@ -11,7 +11,7 @@ passport.serializeUser((user, done) => {
 })
 
 passport.deserializeUser((id, done) => {
-  app.models.user.findOne({ id })
+  app.models.User.findOne({ id })
     .then(user => done(null, user))
     .catch(err => done(err))
 })
@@ -23,7 +23,7 @@ passport.use(new localStrategy(
   },
   (email, password, done) => {
 
-    app.models.user.findOne({ email })
+    app.models.User.findOne({ email })
       // 检查用户是否存在
       .then(user => {
         if (!user) { throw new Error('No Such User.') }
@@ -51,7 +51,7 @@ passport.use(new jwtStrategy(
     algorithm: tokenConfig.algorithm,
   },
   ({ id }, done) => {
-    app.models.user.findOne({ id })
+    app.models.User.findOne({ id })
       .then(user => {
         if (!user) { throw new Error('No Such User.') }
         return user

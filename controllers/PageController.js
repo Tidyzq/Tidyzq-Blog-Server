@@ -1,4 +1,4 @@
-const Page = app.models.page
+const Page = app.models.Page
 
 module.exports = {
 

@@ -1,9 +1,9 @@
 const _ = require('lodash')
-const Document = require('./document')
+const Document = require('./Document')
 
-function Page (data) {
+function Post (data) {
   Document.call(this, data)
-  this.type = 'page'
+  this.type = 'post'
 }
 
 function solveQuery (query) {
@@ -17,7 +17,7 @@ function solveQuery (query) {
 function solveWhere (where) {
   return {
     $op: 'and',
-    $conditions: [{ type: 'page' }, where ],
+    $conditions: [{ type: 'post' }, where ],
   }
 }
 
@@ -25,53 +25,53 @@ function solveSet (set) {
   return _.omit(set, [ 'type' ])
 }
 
-Page.init = function () {
+Post.init = function () {
   return Promise.resolve()
 }
 
-Page.find = function (query) {
+Post.find = function (query) {
   return Document.find(solveQuery(query))
 }
 
-Page.findOne = function (query) {
+Post.findOne = function (query) {
   return Document.findOne(solveQuery(query))
 }
 
-Page.count = function (where) {
+Post.count = function (where) {
   return Document.count(solveWhere(where))
 }
 
-Page.update = function (where, set) {
+Post.update = function (where, set) {
   return Document.count(solveWhere(where), solveSet(set))
 }
 
-Page.destroy = function (where) {
+Post.destroy = function (where) {
   return Document.destroy(solveWhere(where))
 }
 
-Page.create = function (items) {
+Post.create = function (items) {
   return Document.create(_.map(items, item => {
-    item.type = 'page'
+    item.type = 'post'
     return item
   }))
 }
 
 const create = function () {
-  return Page.create([ this ])
+  return Post.create([ this ])
 }
 
 const destroy = function () {
-  return Page.destroy({ id: this.id })
+  return Post.destroy({ id: this.id })
 }
 
 const update = function () {
-  return Page.update({ id: this.id }, this)
+  return Post.update({ id: this.id }, this)
 }
 
-Page.prototype = _.create(Document.prototype, {
+Post.prototype = _.create(Document.prototype, {
   create,
   destroy,
   update,
 })
 
-module.exports = Page
+module.exports = Post

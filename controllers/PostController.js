@@ -1,4 +1,4 @@
-const Post = app.models.post
+const Post = app.models.Post
 
 module.exports = {
 

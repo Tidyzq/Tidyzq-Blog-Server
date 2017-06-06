@@ -1,4 +1,4 @@
-const User = app.models.user
+const User = app.models.User
 // const Document = app.models.document
 
 module.exports = {

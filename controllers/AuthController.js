@@ -1,6 +1,7 @@
 const passport = require('passport')
 const bcrypt = require('bcrypt')
 
+const User = app.models.User
 const tokenService = app.services.token
 
 module.exports = {
@@ -27,8 +28,6 @@ module.exports = {
    */
   register (req, res, next) {
     // 由请求参数构造待创建User对象
-    const User = app.models.user
-
     const user = new User(req.body)
 
     bcrypt.genSalt(10)
