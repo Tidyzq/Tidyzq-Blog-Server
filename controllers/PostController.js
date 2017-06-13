@@ -28,7 +28,7 @@ module.exports = {
    * 获取用户全部博文
    */
   getPostsByUser (req, res, next) {
-    const id = req.params.id
+    const id = req.params.userId
 
     Post.find({
       $where: { author: id },
@@ -53,7 +53,7 @@ module.exports = {
    * 根据Id获取博文详情
    */
   getPostById (req, res, next) {
-    const id = req.params.id
+    const id = req.params.postId
 
     Post.findOne({ id })
       .then(post => {
@@ -75,7 +75,7 @@ module.exports = {
    * 根据url获取博文详情
    */
   getPostByUrl (req, res, next) {
-    const url = req.params.url
+    const url = req.params.postUrl
 
     Post.findOne({ url })
       .then(post => {

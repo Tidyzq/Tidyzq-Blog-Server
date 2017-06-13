@@ -2,7 +2,7 @@ const passport = require('passport')
 const bcrypt = require('bcrypt')
 
 const User = app.models.User
-const tokenService = app.services.token
+const TokenService = app.services.token
 
 module.exports = {
 
@@ -18,7 +18,7 @@ module.exports = {
         log.verbose(`AuthController::hasAccessToken ${err}`)
         return res.unauthorized(err.message)
       }
-      req.user = user
+      req.data.auth = user
       next()
     })(req, res, next)
   },
@@ -59,7 +59,7 @@ module.exports = {
         return res.badRequest(err.message)
       }
 
-      const accessToken = tokenService.createAccessToken(user)
+      const accessToken = TokenService.createAccessToken(user)
 
       // 将 token 作为 http body 返回
       return res.ok({

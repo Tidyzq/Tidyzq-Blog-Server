@@ -1,34 +1,24 @@
 const { defineModel } = require('../utils/modelHelper')
 
-module.exports = defineModel('Users', {
+module.exports = defineModel('Tags', {
   fields: {
     id: {
       type: 'INTEGER',
-      notNull: true,
       key: true,
       autoincrement: true,
     },
-    username: {
+    name: {
       type: 'TEXT',
       notNull: true,
     },
-    password: {
+    url: {
       type: 'TEXT',
       notNull: true,
-      hide: true,
-    },
-    email: {
-      type: 'TEXT',
       unique: true,
-      notNull: true,
-    },
-    avatar: {
-      type: 'TEXT',
-      notNull: true,
     },
   },
   indexes: [{
-    name: 'Idx_Users_email',
-    fields: [ 'email' ],
+    name: 'Idx_Tags_url',
+    fields: [ 'url' ],
   }],
 })

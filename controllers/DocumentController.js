@@ -7,25 +7,51 @@ module.exports = {
    * 检查是否是文章作者
    */
   isAuthor (req, res, next) {
-    const id = req.params.id
 
-    Document.findOne({ id })
-      .then(document => {
-        if (!document || !req.user || req.user.id !== document.author) {
-          throw new Error('not author.')
-        }
-      })
-      .then(next)
-      .catch(err => {
-        log.verbose(`DocumentController.isAuthor :: ${err}`)
-        res.unauthorized(err.message)
-      })
+    Promise.resolve(req.data.document)
+    .then(document => {
+      return document || Document.findOne({ id: req.params.documentId })
+    })
+    .then(document => {
+      if (!document || !req.data.auth || req.data.auth.id !== document.author) {
+        throw new Error('not author of document.')
+      }
+      req.data.document = document
+      next()
+    })
+    .catch(err => {
+      log.verbose(`DocumentController.isAuthor :: ${err}`)
+      res.unauthorized(err.message)
+    })
+  },
+
+  /**
+   * 检查文章是否存在
+   */
+  hasDocument (req, res, next) {
+
+    Promise.resolve(req.data.document)
+    .then(document => {
+      return document || Document.findOne({ id: req.params.documentId })
+    })
+    .then(document => {
+      if (!document) {
+        throw new Error('document not found.')
+      }
+      req.data.document = document
+      next()
+    })
+    .catch(err => {
+      log.verbose(`DocumentController.hasDocument :: ${err}`)
+      res.notFound(err.message)
+    })
   },
 
   /**
    * 获取所有文章
    */
   getDocuments (req, res, next) {
+
     Document.find({
       $where: req.query.where,
       $limit: req.query.limit,
@@ -41,7 +67,7 @@ module.exports = {
     })
     .catch(err => {
       log.verbose(`Document.getDocuments :: ${err}`)
-      res.notFound(err.message)
+      res.badRequest(err.message)
     })
   },
 
@@ -49,15 +75,17 @@ module.exports = {
    * 获取单个文章
    */
   getDocumentById (req, res, next) {
-    const id = req.params.id
 
-    Document.findOne({ id })
+    Promise.resolve(req.data.document)
+      .then(document => {
+        return document || Document.findOne({ id: req.params.documentId })
+      })
       .then(document => {
         res.ok(document)
       })
       .catch(err => {
         log.verbose(`Document.getDocumentById :: ${err}`)
-        res.notFound(err.message)
+        res.badRequest(err.message)
       })
   },
 
@@ -98,14 +126,10 @@ module.exports = {
    * 修改文章
    */
   updateDocumentById (req, res, next) {
-    const id = req.params.id
 
-    Document.findOne({ id })
+    Promise.resolve(req.data.document)
       .then(document => {
-        if (!document) {
-          throw new Error('document not found.')
-        }
-        return document
+        return document || Document.findOne({ id: req.params.documentId })
       })
       .then(document => {
         document = _.assign(document, _.pick(req.body, [ 'title', 'url', 'markdown' ]), {
@@ -126,14 +150,10 @@ module.exports = {
    * 删除文章
    */
   deleteDocumentById (req, res, next) {
-    const id = req.params.id
 
-    Document.findOne({ id })
+    Promise.resolve(req.data.document)
       .then(document => {
-        if (!document) {
-          throw new Error('document not found.')
-        }
-        return document
+        return document || Document.findOne({ id: req.params.documentId })
       })
       .then(document => {
         return document.destroy().then(() => document)
@@ -151,7 +171,7 @@ module.exports = {
    * 获取用户文章
    */
   getDocumentsByUser (req, res, next) {
-    const id = req.params.id
+    const id = req.params.userId
 
     Document.find({
       $where: { author: id },

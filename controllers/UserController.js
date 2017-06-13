@@ -7,7 +7,7 @@ module.exports = {
    * 检查是否是用户自身
    */
   isSelf (req, res, next) {
-    if (req.user && req.params.id && req.user.id === parseInt(req.params.id)) {
+    if (req.data.auth && req.params.userId && req.data.auth.id === parseInt(req.params.userId)) {
       return next()
     }
     log.verbose('UserController.isSelf :: Unauthorized')
@@ -18,18 +18,45 @@ module.exports = {
    * 检查用户是否存在
    */
   hasUser (req, res, next) {
-    const id = req.params.id
 
-    User.findOne({ id })
-      .then(user => {
-        if (!user) {
-          throw new Error('user not found.')
-        }
+    Promise.resolve(req.data.user)
+    .then(user => {
+      return user || User.findOne({ id: req.params.userId })
+    })
+    .then(user => {
+      if (!user) {
+        throw new Error('user not found.')
+      }
+      req.data.user = user
+      next()
+    })
+    .catch(err => {
+      log.verbose(`UserController.hasUser :: ${err}`)
+      res.notFound(err.message)
+    })
+  },
+
+  /**
+   * 获取用户列表
+   */
+  getUsers (req, res, next) {
+
+    User.find({
+      $where: req.query.where,
+      $limit: req.query.limit,
+      $offset: req.query.offset,
+      $sort: req.query.sort,
+    })
+      .then(users => {
+        return User.count()
+          .then(count => {
+            res.set('X-Total-Count', count)
+            res.ok(users)
+          })
       })
-      .then(next)
       .catch(err => {
-        log.verbose(`UserController.hasUser :: ${err}`)
-        res.notFound(err.message)
+        log.verbose(`UserController.getUsers :: ${err}`)
+        res.badRequest(err.message)
       })
   },
 
@@ -37,23 +64,11 @@ module.exports = {
    * 获取用户信息
    */
   getUserById (req, res, next) {
-    const id = req.params.id
 
-    User.findOne({ id })
+    Promise.resolve(req.data.user)
       .then(user => {
-        if (user) { return user }
-        throw new Error('User Not Found')
+        return user || User.findOne({ id: req.params.userId })
       })
-      // .then(user => {
-      //   if (req.query.documents) {
-      //     return Document.find({ author: id })
-      //       .then(documents => {
-      //         user.documents = documents
-      //         return user
-      //       })
-      //   }
-      //   return user
-      // })
       .then(user => {
         res.ok(user)
       })
