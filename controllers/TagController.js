@@ -1,15 +1,15 @@
 const Tag = app.models.Tag
-const Document = app.models.Document
-const TagDocument = app.models.TagDocument
+// const Document = app.models.Document
+// const TagDocument = app.models.TagDocument
 const { generateUrl } = require('../utils/urlHelper')
 
 module.exports = {
 
-  getTagsByDocument (req, res, next) {
+  // getTagsByDocument (req, res) {
 
-  },
+  // },
 
-  createTag (req, res, next) {
+  createTag (req, res) {
     const tag = new Tag(req.body)
 
     return Promise.resolve()

@@ -5,7 +5,7 @@ module.exports = {
   /**
    * 获取全部设置
    */
-  getSettings (req, res, next) {
+  getSettings (req, res) {
     Setting.find()
       .then(settings => {
         return _.reduce(settings, (result, setting) => {
@@ -24,7 +24,7 @@ module.exports = {
   /**
    * 更新设置
    */
-  updateSettings (req, res, next) {
+  updateSettings (req, res) {
     const settings = req.body
 
     Promise.resolve(settings)

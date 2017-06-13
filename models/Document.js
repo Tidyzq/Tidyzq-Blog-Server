@@ -24,7 +24,6 @@ module.exports = defineModel('Documents', {
     },
     markdown: {
       type: 'TEXT',
-      notNull: true,
     },
     modifiedAt: {
       type: 'DATETIME',

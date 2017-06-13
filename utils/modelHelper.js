@@ -314,7 +314,8 @@ function solveSort (fields, sort, prefix = '') {
  * }
  */
 function solveJoin (fields, query) {
-  let { $select, $where, $limit, $offset, $sort, $join: join } = query
+  const { $select, $where, $limit, $offset, $sort } = query
+  let { $join: join } = query
 
   if (!_.has(query, '$join')) {
     join = query

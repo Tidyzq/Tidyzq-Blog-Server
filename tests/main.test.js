@@ -1,30 +1,15 @@
-const App = require('../app/index'),
-  supertest = require('supertest'),
-  Promise = require('bluebird')
+const App = require('../app/index')
+const supertest = require('supertest')
 
-const testConfig = {
-  env: 'test',
-  logger: {
-    // level: 'verbose',
-  },
-  static: '.tmp',
-  image: {
-    path: '.tmp/images',
-  },
-}
+process.env.NODE_ENV = 'testing'
 
 before(function () {
   this.timeout(5000)
   // start app for tests
-  var server = new App()
-  return server.start(testConfig)
-    .then(function () {
-      var app = server.app
+  const server = new App()
+  return server.start()
+    .then(() => {
+      const app = server.app
       global.agent = supertest(app)
-      global.Promise = Promise
     })
 })
-
-// after(function (done) {
-//   app.lower(done);
-// });

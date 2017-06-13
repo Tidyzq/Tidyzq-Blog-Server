@@ -5,7 +5,7 @@ module.exports = {
   /**
    * 获取全部博文
    */
-  getPosts (req, res, next) {
+  getPosts (req, res) {
     Post.find({
       $limit: req.query.limit,
       $offset: req.query.offset,
@@ -27,7 +27,7 @@ module.exports = {
   /**
    * 获取用户全部博文
    */
-  getPostsByUser (req, res, next) {
+  getPostsByUser (req, res) {
     const id = req.params.userId
 
     Post.find({
@@ -52,7 +52,7 @@ module.exports = {
   /**
    * 根据Id获取博文详情
    */
-  getPostById (req, res, next) {
+  getPostById (req, res) {
     const id = req.params.postId
 
     Post.findOne({ id })
@@ -74,7 +74,7 @@ module.exports = {
   /**
    * 根据url获取博文详情
    */
-  getPostByUrl (req, res, next) {
+  getPostByUrl (req, res) {
     const url = req.params.postUrl
 
     Post.findOne({ url })

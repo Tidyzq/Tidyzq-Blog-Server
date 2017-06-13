@@ -5,7 +5,7 @@ module.exports = {
   /**
    * 根据url获取页面详情
    */
-  getPageByUrl (req, res, next) {
+  getPageByUrl (req, res) {
     const url = req.params.pageUrl
 
     Page.findOne({ url })

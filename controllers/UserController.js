@@ -39,7 +39,7 @@ module.exports = {
   /**
    * 获取用户列表
    */
-  getUsers (req, res, next) {
+  getUsers (req, res) {
 
     User.find({
       $where: req.query.where,
@@ -63,7 +63,7 @@ module.exports = {
   /**
    * 获取用户信息
    */
-  getUserById (req, res, next) {
+  getUserById (req, res) {
 
     Promise.resolve(req.data.user)
       .then(user => {
@@ -81,16 +81,18 @@ module.exports = {
   /**
    * 更改用户信息
    */
-  updateUserById (req, res, next) {
-    const value = req.body
-    const user = _.merge(req.user, value)
+  updateUserById (req, res) {
+    const value = _.pick(req.body, [ 'username', 'avatar' ])
 
-    Promise.resolve(req.user)
+    Promise.resolve(req.data.user)
+      .then(user => {
+        return user || User.findOne({ id: req.params.userId })
+      })
       .then(user => {
         user = _.merge(user, value)
-        return user.update()
+        return user.update().then(() => user)
       })
-      .then(() => {
+      .then(user => {
         res.ok(user)
       })
       .catch(err => {

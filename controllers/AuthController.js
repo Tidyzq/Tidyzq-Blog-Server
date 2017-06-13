@@ -26,7 +26,7 @@ module.exports = {
   /**
    * 注册
    */
-  register (req, res, next) {
+  register (req, res) {
     // 由请求参数构造待创建User对象
     const user = new User(req.body)
 
@@ -39,8 +39,6 @@ module.exports = {
       })
       .then(id => {
         user.id = id
-      })
-      .then(() => {
         res.ok(user)
       })
       .catch(err => {
@@ -53,7 +51,10 @@ module.exports = {
    * 登陆
    */
   login (req, res, next) {
-    passport.authenticate('local', function (err, user) {
+    passport.authenticate('local', function (err, user, fail) {
+      if (!user && !err && fail) {
+        err = fail
+      }
       if (err) {
         log.verbose('AuthController::login', err.message)
         return res.badRequest(err.message)

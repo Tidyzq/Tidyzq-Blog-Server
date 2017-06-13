@@ -61,7 +61,7 @@ module.exports.http = {
         },
       },
       '/tags': {
-        post: [ 'AuthorController.hasAccessToken' ]
+        post: [ 'AuthorController.hasAccessToken' ],
       },
       '/posts': {
         get: [ 'PostController.getPosts' ],

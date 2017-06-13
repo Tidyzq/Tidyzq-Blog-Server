@@ -50,7 +50,7 @@ module.exports = {
   /**
    * 获取所有文章
    */
-  getDocuments (req, res, next) {
+  getDocuments (req, res) {
 
     Document.find({
       $where: req.query.where,
@@ -74,7 +74,7 @@ module.exports = {
   /**
    * 获取单个文章
    */
-  getDocumentById (req, res, next) {
+  getDocumentById (req, res) {
 
     Promise.resolve(req.data.document)
       .then(document => {
@@ -92,7 +92,7 @@ module.exports = {
   /**
    * 创建文章
    */
-  createDocument (req, res, next) {
+  createDocument (req, res) {
     const document = new Document(_.assign(req.body, {
       author: req.user.id,
       createdAt: Date.now(),
@@ -125,7 +125,7 @@ module.exports = {
   /**
    * 修改文章
    */
-  updateDocumentById (req, res, next) {
+  updateDocumentById (req, res) {
 
     Promise.resolve(req.data.document)
       .then(document => {
@@ -149,7 +149,7 @@ module.exports = {
   /**
    * 删除文章
    */
-  deleteDocumentById (req, res, next) {
+  deleteDocumentById (req, res) {
 
     Promise.resolve(req.data.document)
       .then(document => {
@@ -170,7 +170,7 @@ module.exports = {
   /**
    * 获取用户文章
    */
-  getDocumentsByUser (req, res, next) {
+  getDocumentsByUser (req, res) {
     const id = req.params.userId
 
     Document.find({

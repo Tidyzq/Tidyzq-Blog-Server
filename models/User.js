@@ -10,7 +10,7 @@ module.exports = defineModel('Users', {
     },
     username: {
       type: 'TEXT',
-      notNull: true,
+      default: '""',
     },
     password: {
       type: 'TEXT',
@@ -24,7 +24,7 @@ module.exports = defineModel('Users', {
     },
     avatar: {
       type: 'TEXT',
-      notNull: true,
+      default: '""',
     },
   },
   indexes: [{
