@@ -1,22 +1,48 @@
 const Post = app.models.Post
+const Document = app.models.Document
+const Tag = app.models.Tag
+const TagDocument = app.models.TagDocument
+const Promise = require('bluebird')
 
 module.exports = {
+
+  /**
+   * 判断页面是否存在
+   */
+  hasPost (req, res, next) {
+
+    Promise.resolve(req.data.post)
+    .then(post => {
+      return post || Post.findOne({ id: req.params.postId, url: req.params.postUrl })
+    })
+    .then(post => {
+      if (!post) {
+        throw new Error('post not found.')
+      }
+      req.data.post = post
+      next()
+    })
+    .catch(err => {
+      log.verbose(`PostController.hasPost :: ${err}`)
+      res.notFound(err.message)
+    })
+  },
 
   /**
    * 获取全部博文
    */
   getPosts (req, res) {
-    Post.find({
-      $limit: req.query.limit,
-      $offset: req.query.offset,
-      $sort: req.query.sort,
+    Promise.props({
+      posts: Post.find({
+        $limit: req.query.limit,
+        $offset: req.query.offset,
+        $sort: req.query.sort,
+      }),
+      count: Post.count(),
     })
-    .then(posts => {
-      return Post.count()
-        .then(count => {
-          res.set('X-Total-Count', count)
-          res.ok(posts)
-        })
+    .then(({ posts, count }) => {
+      res.set('X-Total-Count', count)
+      res.ok(posts)
     })
     .catch(err => {
       app.log.verbose(`PostController :: getPosts ${err}`)
@@ -30,18 +56,20 @@ module.exports = {
   getPostsByUser (req, res) {
     const id = req.params.userId
 
-    Post.find({
-      $where: { author: id },
-      $limit: req.query.limit,
-      $offset: req.query.offset,
-      $sort: req.query.sort,
+    Promise.props({
+      posts: Post.find({
+        $where: { author: id },
+        $limit: req.query.limit,
+        $offset: req.query.offset,
+        $sort: req.query.sort,
+      }),
+      count: Post.count({
+        author: id,
+      }),
     })
-    .then(posts => {
-      return Post.count({ author: id })
-        .then(count => {
-          res.set('X-Total-Count', count)
-          res.ok(posts)
-        })
+    .then(({ posts, count }) => {
+      res.set('X-Total-Count', count)
+      res.ok(posts)
     })
     .catch(err => {
       app.log.verbose(`PostController :: getPostsByUser ${err}`)
@@ -50,47 +78,76 @@ module.exports = {
   },
 
   /**
-   * 根据Id获取博文详情
+   * 获取博文详情
    */
-  getPostById (req, res) {
-    const id = req.params.postId
+  getPost (req, res) {
 
-    Post.findOne({ id })
-      .then(post => {
-        if (!post) {
-          throw new Error('post not found')
-        }
-        return post
-      })
-      .then(post => {
-        res.ok(post)
-      })
-      .catch(err => {
-        app.log.verbose(`PostController :: getPostById ${err}`)
-        res.notFound(err.message)
-      })
+    Promise.resolve(req.data.post)
+    .then(post => {
+      return post || Post.findOne({ id: req.params.postId, url: req.params.postUrl })
+    })
+    .then(post => {
+      res.ok(post)
+    })
+    .catch(err => {
+      app.log.verbose(`PostController :: getPostById ${err}`)
+      res.notFound(err.message)
+    })
   },
 
   /**
-   * 根据url获取博文详情
+   * 获取标签所有博文
    */
-  getPostByUrl (req, res) {
-    const url = req.params.postUrl
+  getPostsByTag (req, res) {
 
-    Post.findOne({ url })
-      .then(post => {
-        if (!post) {
-          throw new Error('post not found')
-        }
-        return post
+    Promise.resolve(req.data.tag)
+    .then(tag => {
+      return Promise.props({
+        posts: Tag.find({
+          $where: { id: tag.id },
+          $join: {
+            from: 'id',
+            to: 'id',
+            through: {
+              model: TagDocument,
+              from: 'tagId',
+              to: 'documentId',
+            },
+            target: Document,
+            where: {
+              type: 'post',
+            },
+            limit: req.query.limit,
+            offset: req.query.offset,
+            sort: req.query.sort,
+          },
+        }),
+        count: Tag.count({
+          $where: { id: tag.id },
+          $join: {
+            from: 'id',
+            to: 'id',
+            through: {
+              model: TagDocument,
+              from: 'tagId',
+              to: 'documentId',
+            },
+            target: Document,
+            where: {
+              type: 'post',
+            },
+          },
+        }),
       })
-      .then(post => {
-        res.ok(post)
-      })
-      .catch(err => {
-        app.log.verbose(`PostController :: getPostById ${err}`)
-        res.notFound(err.message)
-      })
+    })
+    .then(({ posts, count }) => {
+      res.set('X-Total-Count', count)
+      res.ok(posts)
+    })
+    .catch(err => {
+      app.log.verbose(`PostController :: getPostsByTag ${err}`)
+      res.notFound(err.message)
+    })
   },
 
 }

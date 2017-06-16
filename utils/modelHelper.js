@@ -171,9 +171,9 @@ function _solveWhereInner (fields, where, prefix, params = []) {
   }
   if (where.$op) {
     const op = where.$op.toLowerCase() === 'or' ? ' OR ' : ' AND '
-    result = _.compact(_.map(where.$conditions, item => _solveWhereInner(fields, item, params).sql)).join(op)
+    result = _.compact(_.map(where.$conditions, item => _solveWhereInner(fields, item, prefix, params).sql)).join(op)
   } else {
-    result = _.map(_.pick(where, fields), (value, key) => {
+    result = _.map(_.pick(_.pickBy(where, _.identity), fields), (value, key) => {
       let op = '='
       if (_.isObject(value)) {
         op = value.$op || '='
@@ -281,48 +281,40 @@ function solveSort (fields, sort, prefix = '') {
  * @param {Array<String>} fields
  * @param {Object} join
  * fields: [ 'field1', 'field2', 'field3' ]
- * query: {
- *   $where: {
- *     field1: 1
+ * join: {
+ *   from: 'a',
+ *   to: 'b',
+ *   through: {
+ *     model: 'anotherModel',
+ *     from: 'aa',
+ *     to: 'ab'
  *   },
- *   $limit: ...,
- *   $offset: ...,
- *   $sort: ...,
- *   $join: {
- *     from: 'a',
- *     to: 'b',
- *     through: {
- *       model: 'anotherModel',
- *       from: 'aa',
- *       to: 'ab'
- *     },
- *     target: 'target',
- *     where: {
- *       tfield: 1
- *     },
- *     limit: ...,
- *     offset: ...,
- *     sort: ...
- *   }
+ *   target: 'target',
+ *   where: {
+ *     tfield: 1
+ *   },
+ *   limit: ...,
+ *   offset: ...,
+ *   sort: ...
  * }
  * => {
- *   sql: `SELECT target.* FROM (SELECT * from source WHERE field1 = ?) AS source
- *     JOIN anotherModel ON source.a = another.aa
- *     JOIN target ON another.ab = target.b
- *     WHERE target.tfield = ?`,
- *   params: [ 1, 1 ]
+ *   target: Target,
+ *   join: {
+ *     sql: `JOIN anotherModel ON source.a = another.aa
+ *       JOIN target ON another.ab = target.b`,
+ *     params: []
+ *   },
+ *   where: {
+ *     sql: 'target.tfield = ?,
+ *     params: [ 1 ]
+ *   }
+ *   ...
  * }
  */
-function solveJoin (fields, query) {
-  const { $select, $where, $limit, $offset, $sort } = query
-  let { $join: join } = query
-
-  if (!_.has(query, '$join')) {
-    join = query
+function solveJoin (fields, join) {
+  if (!join || _.isEmpty(join)) {
+    return {}
   }
-
-  const subQuery = solveQuery(fields, { $select, $where, $limit, $offset, $sort })
-
   let { target, select, where, limit, offset, sort } = join
   const { through, from, to } = join
 
@@ -338,17 +330,16 @@ function solveJoin (fields, query) {
   if (!through) {
     joinSql = `JOIN ${target.tableName} ON Source.${from} = ${target.tableName}.${to}`
   } else {
-    joinSql = `JOIN ${through.model.tableName} ON Source.${from} = ${through.model.tableName}.${through.model.from}
-      JOIN ${target.tableName} ON ${through.model.tableName}.${through.model.to} = ${target.tableName}.${to}`
+    joinSql = `JOIN ${through.model.tableName} ON Source.${from} = ${through.model.tableName}.${through.from}
+      JOIN ${target.tableName} ON ${through.model.tableName}.${through.to} = ${target.tableName}.${to}`
   }
 
   const prefix = `${target.tableName}.`
   const targetFields = _.keys(target.options.fields)
 
-  ;({ select, where, limit, offset, sort } = solveQuery(targetFields, { select, where, limit, offset, sort }, prefix))
+  ;({ select, where, limit, offset, sort } = solveQuery(targetFields, { $select: select, $where: where, $limit: limit, $offset: offset, $sort: sort }, prefix))
 
   return {
-    subQuery,
     join: {
       sql: joinSql,
       params: [],
@@ -368,17 +359,18 @@ function solveJoin (fields, query) {
  * @param {Object} query
  */
 function solveQuery (fields, query, prefix = '') {
-  let { $select: select, $where: where, $limit: limit, $offset: offset, $sort: sort } = query
+  let { $select: select, $where: where, $join: join, $limit: limit, $offset: offset, $sort: sort } = query
   if (!_.has(query, '$where')) {
     where = query
   }
   select = solveSelect(fields, select, prefix)
   where = solveWhere(fields, where, prefix)
+  join = solveJoin(fields, join, prefix)
   limit = solveLimit(fields, limit, prefix)
   offset = solveOffset(fields, offset, prefix)
   sort = solveSort(fields, sort, prefix)
 
-  return { select, where, limit, offset, sort }
+  return { select, where, join, limit, offset, sort }
 }
 
 /**
@@ -484,14 +476,22 @@ function defineModel (tableName, options) {
    * model.find
    */
   model.find = function (query) {
-    const { select, where, sort, limit, offset } = solveQuery(flattenFields, query)
+    const { select, where, join, sort, limit, offset } = solveQuery(flattenFields, query || {})
 
-    const sql = `SELECT ${select.sql} FROM ${tableName} ${where.sql} ${sort.sql} ${limit.sql} ${offset.sql}`
-    const params = _.concat(select.params, where.params, sort.params, limit.params, offset.params)
+    let sql = `SELECT ${select.sql} FROM ${tableName} ${where.sql} ${sort.sql} ${limit.sql} ${offset.sql}`
+    let params = _.concat(select.params, where.params, sort.params, limit.params, offset.params)
+    let target = model
+
+    if (!_.isEmpty(join)) {
+      sql = `SELECT ${join.select.sql} FROM (${sql}) AS Source ${join.join.sql} ${join.where.sql} ${join.sort.sql} ${join.limit.sql} ${join.offset.sql}`
+      params = _.concat(join.select.params, params, join.join.params, join.where.params, join.sort.params, join.limit.params, join.offset.params)
+      target = join.target
+    }
+
     app.log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.all(sql, params, (err, rows) => {
-        err ? reject(err) : resolve(_.map(rows, row => new model(row)))
+        err ? reject(err) : resolve(_.map(rows, row => new target(row)))
       })
     })
   }
@@ -500,14 +500,22 @@ function defineModel (tableName, options) {
    * model.findOne
    */
   model.findOne = function (query) {
-    const { select, where, sort } = solveQuery(flattenFields, query)
+    const { select, where, join, sort, limit, offset } = solveQuery(flattenFields, query || {})
 
-    const sql = `SELECT ${select.sql} FROM ${tableName} ${where.sql} ${sort.sql}`
-    const params = _.concat(select.params, where.params, sort.params)
+    let sql = `SELECT ${select.sql} FROM ${tableName} ${where.sql} ${sort.sql} ${limit.sql} ${offset.sql}`
+    let params = _.concat(select.params, where.params, sort.params, limit.params, offset.params)
+    let target = model
+
+    if (!_.isEmpty(join)) {
+      sql = `SELECT ${join.select.sql} FROM (${sql}) AS Source ${join.join.sql} ${join.where.sql} ${join.sort.sql} ${join.limit.sql} ${join.offset.sql}`
+      params = _.concat(join.select.params, params, join.join.params, join.where.params, join.sort.params, join.limit.params, join.offset.params)
+      target = join.target
+    }
+
     app.log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.get(sql, params, (err, row) => {
-        err ? reject(err) : resolve(row && new model(row))
+        err ? reject(err) : resolve(row && new target(row))
       })
     })
   }
@@ -515,11 +523,21 @@ function defineModel (tableName, options) {
   /**
    * model.count
    */
-  model.count = function (where) {
-    where = solveWhere(flattenFields, where)
+  model.count = function (query) {
+    const { select, where, join, sort, limit, offset } = solveQuery(flattenFields, query || {})
+    let sql, params
 
-    const sql = `SELECT COUNT(*) FROM ${tableName} ${where.sql}`
-    const params = where.params
+    if (!_.isEmpty(join)) {
+      sql = `SELECT ${select.sql} FROM ${tableName} ${where.sql} ${sort.sql} ${limit.sql} ${offset.sql}`
+      params = _.concat(select.params, where.params, sort.params, limit.params, offset.params)
+
+      sql = `SELECT COUNT(*) FROM (${sql}) AS Source ${join.join.sql} ${join.where.sql} ${join.sort.sql} ${join.limit.sql} ${join.offset.sql}`
+      params = _.concat(params, join.join.params, join.where.params, join.sort.params, join.limit.params, join.offset.params)
+    } else {
+      sql = `SELECT COUNT(*) FROM ${tableName} ${where.sql} ${sort.sql} ${limit.sql} ${offset.sql}`
+      params = _.concat(where.params, sort.params, limit.params, offset.params)
+    }
+
     app.log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.get(sql, params, (err, row) => {
@@ -594,53 +612,6 @@ function defineModel (tableName, options) {
   }
 
   /**
-   * model.join
-   */
-  model.join = function (query) {
-    const {
-      select,
-      subQuery: {
-        select: subSelect,
-        where: subWhere,
-        sort: subSort,
-        limit: subLimit,
-        offset: subOffset,
-      },
-      join,
-      where,
-      sort,
-      limit,
-      offset,
-      target,
-    } = solveJoin(flattenFields, query)
-
-    const sql = `SELECT ${select.sql} FROM
-      (SELECT ${subSelect.sql} FROM ${tableName} ${subWhere.sql} ${subSort.sql} ${subLimit.sql} ${subOffset.sql})
-      AS Source ${join.sql} ${where.sql} ${sort.sql} ${limit.sql} ${offset.sql}`
-    const params = _.concat(select.params, subSelect.params, subWhere.params, subSort.params, subLimit.params, subOffset.params, join.params, where.params, sort.params, limit.params, offset.params)
-    app.log.silly(sql, params)
-    return new Promise((resolve, reject) => {
-      app.sqlite.all(sql, params, (err, rows) => {
-        err ? reject(err) : resolve(_.map(rows, row => new target(row)))
-      })
-    })
-  }
-
-  /**
-   * model.prototype.join
-   */
-  const join = eval(`(function (query) {
-    return model.join({
-      $join: query,
-      $where: {${
-        _.map(flattenKeys, key => {
-          return `${key}: this.${key}`
-        }).join(',')
-      }}
-    })
-  })`)
-
-  /**
    * model.prototype.create
    */
   const create = function () {
@@ -708,7 +679,6 @@ function defineModel (tableName, options) {
     create,
     update,
     save,
-    join,
     destroy,
     toJSON,
     toString,

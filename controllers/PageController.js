@@ -3,25 +3,43 @@ const Page = app.models.Page
 module.exports = {
 
   /**
-   * 根据url获取页面详情
+   * 判断页面是否存在
    */
-  getPageByUrl (req, res) {
-    const url = req.params.pageUrl
+  hasPage (req, res, next) {
 
-    Page.findOne({ url })
-      .then(page => {
-        if (!page) {
-          throw new Error('page not found')
-        }
-        return page
-      })
-      .then(page => {
-        res.ok(page)
-      })
-      .catch(err => {
-        app.log.verbose(`PageController :: getPageById ${err}`)
-        res.notFound(err.message)
-      })
+    Promise.resolve(req.data.page)
+    .then(page => {
+      return page || Page.findOne({ id: req.params.pageId, url: req.params.pageUrl })
+    })
+    .then(page => {
+      if (!page) {
+        throw new Error('page not found.')
+      }
+      req.data.page = page
+      next()
+    })
+    .catch(err => {
+      log.verbose(`PageController.hasPage :: ${err}`)
+      res.notFound(err.message)
+    })
+  },
+
+  /**
+   * 获取页面详情
+   */
+  getPage (req, res) {
+
+    Promise.resolve(req.data.page)
+    .then(page => {
+      return page || Page.findOne({ id: req.params.pageId, url: req.params.pageUrl })
+    })
+    .then(page => {
+      res.ok(page)
+    })
+    .catch(err => {
+      app.log.verbose(`PageController :: getPage ${err}`)
+      res.notFound(err.message)
+    })
   },
 
 }

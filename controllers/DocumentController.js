@@ -94,7 +94,7 @@ module.exports = {
    */
   createDocument (req, res) {
     const document = new Document(_.assign(req.body, {
-      author: req.user.id,
+      author: req.data.user.id,
       createdAt: Date.now(),
       modifiedAt: Date.now(),
     }))
@@ -129,10 +129,7 @@ module.exports = {
 
     Promise.resolve(req.data.document)
       .then(document => {
-        return document || Document.findOne({ id: req.params.documentId })
-      })
-      .then(document => {
-        document = _.assign(document, _.pick(req.body, [ 'title', 'url', 'markdown' ]), {
+        document = _.assign(document, _.pick(req.body, [ 'title', 'url', 'markdown', 'type' ]), {
           modifiedAt: Date.now(),
         })
         return document.update().then(() => document)

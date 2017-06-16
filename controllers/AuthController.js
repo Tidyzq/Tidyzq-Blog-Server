@@ -56,7 +56,7 @@ module.exports = {
         err = fail
       }
       if (err) {
-        log.verbose('AuthController::login', err.message)
+        log.verbose('AuthController::login', err.stack)
         return res.badRequest(err.message)
       }
 

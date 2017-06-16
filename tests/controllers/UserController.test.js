@@ -2,14 +2,14 @@ const assert = require('assert')
 const _ = require('lodash')
 
 describe('UserController', () => {
-  let user = {
+  const user = {
     email: 'test_usercontroller_email',
     username: 'test_usercontroller_username',
     password: '123456',
     avatar: 'test_usercontroller_avatar',
   }
   let accessToken
-  const wrongAccessToken = '1.2.3'
+  // const wrongAccessToken = '1.2.3'
 
   const register = function () {
     return agent.post('/api/auth/register')

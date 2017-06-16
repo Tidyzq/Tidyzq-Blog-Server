@@ -46,34 +46,50 @@ module.exports.http = {
         },
       },
       '/documents': {
+        get: [ 'AuthController.hasAccessToken', 'DocumentController.getDocuments' ],
         post: [ 'AuthController.hasAccessToken', 'DocumentController.createDocument' ],
         '/:documentId': {
           get: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'DocumentController.getDocumentById' ],
           put: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'DocumentController.updateDocumentById' ],
           delete: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'DocumentController.deleteDocumentById' ],
           '/tags': {
-            get: [ 'AuthorController.hasAccessToken', 'DocumentController.hasDocument', 'TagController.getTagsByDocument' ],
-            post: [ 'AuthorController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'TagController.linkDocumentWithTags' ],
+            get: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'TagController.getTagsByDocument' ],
+            post: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'TagController.linkDocumentWithTags' ],
             '/:tagId': {
-              delete: [ 'AuthorController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'TagController.unlinkTagDocument' ],
+              delete: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'TagController.unlinkTagDocument' ],
             },
           },
         },
       },
       '/tags': {
-        post: [ 'AuthorController.hasAccessToken' ],
+        get: [ 'AuthController.hasAccessToken', 'TagController.getTags' ],
+        post: [ 'AuthController.hasAccessToken', 'TagController.createTag' ],
+        '/id/:tagId': {
+          get: [ 'AuthController.hasAccessToken', 'TagController.hasTag', 'TagController.getTag' ],
+          put: [ 'AuthController.hasAccessToken', 'TagController.hasTag', 'TagController.updateTag' ],
+          delete: [ 'AuthController.hasAccessToken', 'TagController.hasTag', 'TagController.deleteTag' ],
+          '/documents': {
+            get: [ 'AuthController.hasAccessToken', 'TagController.hasTag', 'DocumentController.getDocumentsByTag' ],
+          },
+        },
+        '/url/:tagUrl': {
+          get: [ 'TagController.hasTag', 'TagController.getTag' ],
+          '/posts': {
+            get: [ 'TagController.hasTag', 'PostController.getPostsByTag' ],
+          },
+        },
       },
       '/posts': {
         get: [ 'PostController.getPosts' ],
-        '/url/:postUrl': {
-          get: [ 'PostController.getPostByUrl' ],
-        },
-        '/id/:postId': {
-          get: [ 'PostController.getPostById' ],
+        '/:postUrl': {
+          get: [ 'PostController.hasPost', 'PostController.getPost' ],
+          '/tags': {
+            get: [ 'PostController.hasPost', 'TagController.getTagsByPost' ],
+          },
         },
       },
-      '/pages/url/:pageUrl': {
-        get: [ 'PageController.getPageByUrl' ],
+      '/pages/:pageUrl': {
+        get: [ 'PageController.hasPage', 'PageController.getPage' ],
       },
     },
   },
