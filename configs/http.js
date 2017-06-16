@@ -35,8 +35,8 @@ module.exports.http = {
       '/users': {
         get: [ 'AuthController.hasAccessToken', 'UserController.getUsers' ],
         '/:userId': {
-          get: [ 'UserController.hasUser', 'UserController.getUserById' ],
-          put: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.hasUser', 'UserController.updateUserById' ],
+          get: [ 'UserController.hasUser', 'UserController.getUser' ],
+          put: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.hasUser', 'UserController.updateUser' ],
           '/documents': {
             get: [ 'AuthController.hasAccessToken', 'UserController.hasUser', 'DocumentController.getDocumentsByUser' ],
           },
@@ -49,9 +49,9 @@ module.exports.http = {
         get: [ 'AuthController.hasAccessToken', 'DocumentController.getDocuments' ],
         post: [ 'AuthController.hasAccessToken', 'DocumentController.createDocument' ],
         '/:documentId': {
-          get: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'DocumentController.getDocumentById' ],
-          put: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'DocumentController.updateDocumentById' ],
-          delete: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'DocumentController.deleteDocumentById' ],
+          get: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'DocumentController.getDocument' ],
+          put: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'DocumentController.updateDocument' ],
+          delete: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'DocumentController.deleteDocument' ],
           '/tags': {
             get: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'TagController.getTagsByDocument' ],
             post: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'TagController.linkDocumentWithTags' ],

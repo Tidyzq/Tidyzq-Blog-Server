@@ -1,5 +1,6 @@
 const User = app.models.User
 // const Document = app.models.document
+const Promise = require('bluebird')
 
 module.exports = {
 
@@ -41,34 +42,31 @@ module.exports = {
    */
   getUsers (req, res) {
 
-    User.find({
-      $where: req.query.where,
-      $limit: req.query.limit,
-      $offset: req.query.offset,
-      $sort: req.query.sort,
+    Promise.props({
+      users: User.find({
+        $where: req.query.where,
+        $limit: req.query.limit,
+        $offset: req.query.offset,
+        $sort: req.query.sort,
+      }),
+      count: User.count({ $where: req.query.where }),
     })
-      .then(users => {
-        return User.count()
-          .then(count => {
-            res.set('X-Total-Count', count)
-            res.ok(users)
-          })
-      })
-      .catch(err => {
-        log.verbose(`UserController.getUsers :: ${err}`)
-        res.badRequest(err.message)
-      })
+    .then(({ users, count }) => {
+      res.set('X-Total-Count', count)
+      res.ok(users)
+    })
+    .catch(err => {
+      log.verbose(`UserController.getUsers :: ${err}`)
+      res.badRequest(err.message)
+    })
   },
 
   /**
    * 获取用户信息
    */
-  getUserById (req, res) {
+  getUser (req, res) {
 
     Promise.resolve(req.data.user)
-      .then(user => {
-        return user || User.findOne({ id: req.params.userId })
-      })
       .then(user => {
         res.ok(user)
       })
@@ -81,13 +79,10 @@ module.exports = {
   /**
    * 更改用户信息
    */
-  updateUserById (req, res) {
+  updateUser (req, res) {
     const value = _.pick(req.body, [ 'username', 'avatar' ])
 
     Promise.resolve(req.data.user)
-      .then(user => {
-        return user || User.findOne({ id: req.params.userId })
-      })
       .then(user => {
         user = _.merge(user, value)
         return user.update().then(() => user)

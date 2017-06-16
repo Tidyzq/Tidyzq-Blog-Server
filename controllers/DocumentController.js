@@ -1,5 +1,8 @@
 const Document = app.models.Document
+const Tag = app.models.Tag
+const TagDocument = app.models.TagDocument
 const { generateUrl } = require('../utils/urlHelper')
+const Promise = require('bluebird')
 
 module.exports = {
 
@@ -9,9 +12,6 @@ module.exports = {
   isAuthor (req, res, next) {
 
     Promise.resolve(req.data.document)
-    .then(document => {
-      return document || Document.findOne({ id: req.params.documentId })
-    })
     .then(document => {
       if (!document || !req.data.auth || req.data.auth.id !== document.author) {
         throw new Error('not author of document.')
@@ -32,9 +32,6 @@ module.exports = {
 
     Promise.resolve(req.data.document)
     .then(document => {
-      return document || Document.findOne({ id: req.params.documentId })
-    })
-    .then(document => {
       if (!document) {
         throw new Error('document not found.')
       }
@@ -52,18 +49,20 @@ module.exports = {
    */
   getDocuments (req, res) {
 
-    Document.find({
-      $where: req.query.where,
-      $limit: req.query.limit,
-      $offset: req.query.offset,
-      $sort: req.query.sort,
+    Promise.props({
+      documents: Document.find({
+        $where: req.query.where,
+        $limit: req.query.limit,
+        $offset: req.query.offset,
+        $sort: req.query.sort,
+      }),
+      count: Document.count({
+        $where: req.query.where,
+      }),
     })
-    .then(documents => {
-      return Document.count(req.query.where)
-        .then(count => {
-          res.set('X-Total-Count', count)
-          res.ok(documents)
-        })
+    .then(({ documents, count }) => {
+      res.set('X-Total-Count', count)
+      res.ok(documents)
     })
     .catch(err => {
       log.verbose(`Document.getDocuments :: ${err}`)
@@ -74,12 +73,9 @@ module.exports = {
   /**
    * 获取单个文章
    */
-  getDocumentById (req, res) {
+  getDocument (req, res) {
 
     Promise.resolve(req.data.document)
-      .then(document => {
-        return document || Document.findOne({ id: req.params.documentId })
-      })
       .then(document => {
         res.ok(document)
       })
@@ -94,7 +90,7 @@ module.exports = {
    */
   createDocument (req, res) {
     const document = new Document(_.assign(req.body, {
-      author: req.data.user.id,
+      author: req.data.auth.id,
       createdAt: Date.now(),
       modifiedAt: Date.now(),
     }))
@@ -125,7 +121,7 @@ module.exports = {
   /**
    * 修改文章
    */
-  updateDocumentById (req, res) {
+  updateDocument (req, res) {
 
     Promise.resolve(req.data.document)
       .then(document => {
@@ -146,12 +142,9 @@ module.exports = {
   /**
    * 删除文章
    */
-  deleteDocumentById (req, res) {
+  deleteDocument (req, res) {
 
     Promise.resolve(req.data.document)
-      .then(document => {
-        return document || Document.findOne({ id: req.params.documentId })
-      })
       .then(document => {
         return document.destroy().then(() => document)
       })
@@ -170,18 +163,65 @@ module.exports = {
   getDocumentsByUser (req, res) {
     const id = req.params.userId
 
-    Document.find({
-      $where: { author: id },
-      $limit: req.query.limit,
-      $offset: req.query.offset,
-      $sort: req.query.sort,
+    Promise.props({
+      documents: Document.find({
+        $where: { author: id },
+        $limit: req.query.limit,
+        $offset: req.query.offset,
+        $sort: req.query.sort,
+      }),
+      count: Document.count({ author: id }),
     })
-    .then(documents => {
-      return Document.count({ author: id })
-        .then(count => {
-          res.set('X-Total-Count', count)
-          res.ok(documents)
-        })
+    .then(({ documents, count }) => {
+      res.set('X-Total-Count', count)
+      res.ok(documents)
+    })
+    .catch(err => {
+      log.verbose(`UserController.getDocuments :: ${err}`)
+      res.badRequest(err.message)
+    })
+  },
+
+  /**
+   * 获取标签所有文章
+   */
+  getDocumentsByTag (req, res) {
+    const tag = req.data.tag
+
+    Promise.props({
+      documents: Tag.find({
+        $where: { id: tag.id },
+        $join: {
+          from: 'id',
+          to: 'id',
+          through: {
+            model: TagDocument,
+            from:  'tagId',
+            to: 'documentId',
+          },
+          target: Document,
+          limit: req.query.limit,
+          offset: req.query.offset,
+          sort: req.query.sort,
+        },
+      }),
+      count: Tag.count({
+        $where: { id: tag.id },
+        $join: {
+          from: 'id',
+          to: 'id',
+          through: {
+            model: TagDocument,
+            from:  'tagId',
+            to: 'documentId',
+          },
+          target: Document,
+        },
+      }),
+    })
+    .then(({ documents, count }) => {
+      res.set('X-Total-Count', count)
+      res.ok(documents)
     })
     .catch(err => {
       log.verbose(`UserController.getDocuments :: ${err}`)

@@ -31,9 +31,6 @@ module.exports = {
 
     Promise.resolve(req.data.page)
     .then(page => {
-      return page || Page.findOne({ id: req.params.pageId, url: req.params.pageUrl })
-    })
-    .then(page => {
       res.ok(page)
     })
     .catch(err => {
