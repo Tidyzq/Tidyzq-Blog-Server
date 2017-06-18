@@ -1,6 +1,7 @@
 const { defineModel } = require('../utils/modelHelper')
+const bcrypt = require('bcrypt')
 
-module.exports = defineModel('Users', {
+const User = defineModel('Users', {
   fields: {
     id: {
       type: 'INTEGER',
@@ -32,3 +33,21 @@ module.exports = defineModel('Users', {
     fields: [ 'email' ],
   }],
 })
+
+const defaultInit = User.init
+
+User.init = function () {
+  return defaultInit()
+    .then(() => bcrypt.genSalt(10))
+    .then(salt => bcrypt.hash('administrator', salt))
+    .then(password => {
+      const user = new User({
+        username: 'admin',
+        password,
+        email: 'admin@admin.com',
+      })
+      return user.create()
+    })
+}
+
+module.exports = User

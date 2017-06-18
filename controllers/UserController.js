@@ -1,5 +1,6 @@
 const User = app.models.User
 // const Document = app.models.document
+const bcrypt = require('bcrypt')
 const Promise = require('bluebird')
 
 module.exports = {
@@ -9,6 +10,7 @@ module.exports = {
    */
   isSelf (req, res, next) {
     if (req.data.auth && req.params.userId && req.data.auth.id === parseInt(req.params.userId)) {
+      req.data.user = req.data.auth
       return next()
     }
     log.verbose('UserController.isSelf :: Unauthorized')
@@ -77,6 +79,30 @@ module.exports = {
   },
 
   /**
+   * 新增用户
+   */
+  createUser (req, res) {
+    // 由请求参数构造待创建User对象
+    const user = new User(req.body)
+
+    bcrypt.genSalt(10)
+      .then(salt => bcrypt.hash(user.password, salt))
+      .then(hash => {
+        user.password = hash
+        log.verbose('UserController.createUser :: encrypting succeed')
+        return user.create()
+      })
+      .then(id => {
+        user.id = id
+        res.ok(user)
+      })
+      .catch(err => {
+        log.verbose(`UserController.createUser :: ${err}`)
+        res.badRequest(err.message)
+      })
+  },
+
+  /**
    * 更改用户信息
    */
   updateUser (req, res) {
@@ -92,6 +118,51 @@ module.exports = {
       })
       .catch(err => {
         log.verbose(`UserController.updateUser :: ${err}`)
+        res.badRequest(req.message)
+      })
+  },
+
+  /**
+   * 删除用户
+   */
+  deleteUser (req, res) {
+    const user = req.data.user
+
+    user.destroy()
+      .then(() => {
+        res.ok(user)
+      })
+      .catch(err => {
+        log.verbose(`UserController.deleteUser :: ${err}`)
+        res.badRequest(req.message)
+      })
+  },
+
+  /**
+   * 修改密码
+   */
+  updateUserPassword (req, res) {
+    const { newPassword, oldPassword } = req.body
+    const user = req.data.user
+
+    bcrypt.compare(oldPassword, user.password)
+      .then(result => {
+        if (!result) {
+          throw new Error('Invalid Password.')
+        }
+      })
+      .then(() => bcrypt.genSalt(10))
+      .then(salt => bcrypt.hash(newPassword, salt))
+      .then(hash => {
+        user.password = hash
+        log.verbose('UserController.updateUserPassword :: encrypting succeed')
+        return user.update()
+      })
+      .then(() => {
+        res.ok(user)
+      })
+      .catch(err => {
+        log.verbose(`UserController.updateUserPassword :: ${err}`)
         res.badRequest(req.message)
       })
   },

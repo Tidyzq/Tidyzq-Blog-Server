@@ -25,20 +25,22 @@ module.exports.http = {
   routes: {
     '/api': {
       '/auth': {
-        '/register': {
-          post: 'AuthController.register',
-        },
         '/login': {
           post: 'AuthController.login',
         },
       },
       '/users': {
         get: [ 'AuthController.hasAccessToken', 'UserController.getUsers' ],
+        post: [ 'AuthController.hasAccessToken', 'UserController.createUser' ],
         '/:userId': {
           get: [ 'UserController.hasUser', 'UserController.getUser' ],
           put: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.hasUser', 'UserController.updateUser' ],
+          delete: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.hasUser', 'UserController.deleteUser' ],
           '/documents': {
             get: [ 'AuthController.hasAccessToken', 'UserController.hasUser', 'DocumentController.getDocumentsByUser' ],
+          },
+          '/password': {
+            put: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.hasUser', 'UserController.updateUserPassword' ],
           },
           '/posts': {
             get: [ 'UserController.hasUser', 'PostController.getPostsByUser' ],

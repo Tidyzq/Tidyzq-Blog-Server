@@ -1,7 +1,4 @@
 const passport = require('passport')
-const bcrypt = require('bcrypt')
-
-const User = app.models.User
 const TokenService = app.services.token
 
 module.exports = {
@@ -15,36 +12,12 @@ module.exports = {
         err = fail
       }
       if (err) {
-        log.verbose(`AuthController::hasAccessToken ${err}`)
+        log.verbose(`AuthController.hasAccessToken :: ${err}`)
         return res.unauthorized(err.message)
       }
       req.data.auth = user
       next()
     })(req, res, next)
-  },
-
-  /**
-   * 注册
-   */
-  register (req, res) {
-    // 由请求参数构造待创建User对象
-    const user = new User(req.body)
-
-    bcrypt.genSalt(10)
-      .then(salt => bcrypt.hash(user.password, salt))
-      .then(hash => {
-        user.password = hash
-        log.verbose('AuthController.register :: encrypting succeed')
-        return user.create()
-      })
-      .then(id => {
-        user.id = id
-        res.ok(user)
-      })
-      .catch(err => {
-        log.verbose(`AuthController.register :: ${err}`)
-        res.badRequest(err.message)
-      })
   },
 
   /**
@@ -56,7 +29,7 @@ module.exports = {
         err = fail
       }
       if (err) {
-        log.verbose('AuthController::login', err.stack)
+        log.verbose(`AuthController.login :: ${err}`)
         return res.badRequest(err.message)
       }
 

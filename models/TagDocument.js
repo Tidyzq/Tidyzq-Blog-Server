@@ -6,11 +6,13 @@ module.exports = defineModel('Tags_Documents', {
       type: 'INTEGER',
       notNull: true,
       key: true,
+      foreign: 'Tags.id',
     },
     documentId: {
       type: 'INTEGER',
       notNull: true,
       key: true,
+      foreign: 'Documents.id',
     },
   },
 })

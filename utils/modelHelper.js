@@ -24,7 +24,7 @@ function _getModel (tableName) {
   if (_.has(models, tableName)) {
     return models[tableName]
   }
-  app.log.error(`modelHelper._getModel :: model ${tableName} is undefined`)
+  log.error(`modelHelper._getModel :: model ${tableName} is undefined`)
 }
 
 /**
@@ -406,7 +406,7 @@ function defineModel (tableName, options) {
   const { fields, indexes, methods, staticMethods } = options
 
   if (_.has(models, tableName)) {
-    app.log.error(`modelHelper.defineModel :: model ${tableName} is already exists!`)
+    log.error(`modelHelper.defineModel :: model ${tableName} is already exists!`)
   }
 
   const { keys, foreigns } = splitFields(fields)
@@ -448,7 +448,7 @@ function defineModel (tableName, options) {
         ${fieldStates.sql}
       )`
       const params = fieldStates.params
-      app.log.silly(sql, params)
+      log.silly(sql, params)
       app.sqlite.run(sql, params,
       err => {
         err ? reject(err) : resolve()
@@ -462,7 +462,7 @@ function defineModel (tableName, options) {
             const sql = `CREATE INDEX IF NOT EXISTS ${name} ON ${tableName} (
               ${fields.join(',')}
             )`
-            app.log.silly(sql)
+            log.silly(sql)
             app.sqlite.run(sql, err => {
               err ? reject(err) : resolve()
             })
@@ -488,7 +488,7 @@ function defineModel (tableName, options) {
       target = join.target
     }
 
-    app.log.silly(sql, params)
+    log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.all(sql, params, (err, rows) => {
         err ? reject(err) : resolve(_.map(rows, row => new target(row)))
@@ -512,7 +512,7 @@ function defineModel (tableName, options) {
       target = join.target
     }
 
-    app.log.silly(sql, params)
+    log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.get(sql, params, (err, row) => {
         err ? reject(err) : resolve(row && new target(row))
@@ -538,7 +538,7 @@ function defineModel (tableName, options) {
       params = _.concat(where.params, sort.params, limit.params, offset.params)
     }
 
-    app.log.silly(sql, params)
+    log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.get(sql, params, (err, row) => {
         err ? reject(err) : resolve(row['COUNT(*)'])
@@ -554,7 +554,7 @@ function defineModel (tableName, options) {
 
     const sql = `DELETE FROM ${tableName} ${where.sql}`
     const params = where.params
-    app.log.silly(sql, params)
+    log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.run(sql, params, function (err) {
         err ? reject(err) : resolve(this.changes)
@@ -571,7 +571,7 @@ function defineModel (tableName, options) {
 
     const sql = `UPDATE ${tableName} SET ${set.sql} ${where.sql}`
     const params = _.concat(set.params, where.params)
-    app.log.silly(sql, params)
+    log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.run(sql, params, function (err) {
         err ? reject(err) : resolve(this.changes)
@@ -587,7 +587,7 @@ function defineModel (tableName, options) {
 
     const sql = `INSERT INTO ${tableName} ${columns} VALUES ${values.sql}`
     const params = values.params
-    app.log.silly(sql, params)
+    log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.run(sql, params, function (err) {
         err ? reject(err) : resolve(this.lastID)
@@ -603,7 +603,7 @@ function defineModel (tableName, options) {
 
     const sql = `INSERT OR REPLACE INTO ${tableName} ${columns} VALUES ${values.sql}`
     const params = values.params
-    app.log.silly(sql, params)
+    log.silly(sql, params)
     return new Promise((resolve, reject) => {
       app.sqlite.run(sql, params, function (err) {
         err ? reject(err) : resolve(this.lastID)
