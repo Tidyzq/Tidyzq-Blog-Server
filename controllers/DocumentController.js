@@ -32,6 +32,9 @@ module.exports = {
 
     Promise.resolve(req.data.document)
     .then(document => {
+      return document || Document.findOne({ id: req.params.documentId })
+    })
+    .then(document => {
       if (!document) {
         throw new Error('document not found.')
       }

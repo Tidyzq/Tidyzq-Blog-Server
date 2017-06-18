@@ -36,9 +36,6 @@ module.exports.http = {
           get: [ 'UserController.hasUser', 'UserController.getUser' ],
           put: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.hasUser', 'UserController.updateUser' ],
           delete: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.hasUser', 'UserController.deleteUser' ],
-          '/documents': {
-            get: [ 'AuthController.hasAccessToken', 'UserController.hasUser', 'DocumentController.getDocumentsByUser' ],
-          },
           '/password': {
             put: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.hasUser', 'UserController.updateUserPassword' ],
           },
