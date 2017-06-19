@@ -75,7 +75,7 @@ module.exports = {
     return Promise.resolve()
       .then(() => {
         if (_.isUndefined(tag.url) && tag.name) {
-          return generateUrl(Tag, tag.title)
+          return generateUrl(Tag, tag.name)
             .then(url => {
               tag.url = url
               log.verbose(`TagController :: generated url ${url}`)
@@ -181,6 +181,27 @@ module.exports = {
   },
 
   /**
+   * 判断是否存在链接
+   */
+  hasTagDocument (req, res, next) {
+    Promise.resolve(req.data.tagDocument)
+    .then(tagDocument => {
+      return tagDocument || TagDocument.findOne({ tagId: req.params.tagId, documentId: req.params.documentdId })
+    })
+    .then(tagDocument => {
+      if (!tagDocument) {
+        throw new Error('tagDocument not found.')
+      }
+      req.data.tagDocument = tagDocument
+      next()
+    })
+    .catch(err => {
+      log.verbose(`TagController.hasTagDocument :: ${err}`)
+      res.notFound(err.message)
+    })
+  },
+
+  /**
    * 获取博文所有标签
    */
   getTagsByPost (req, res) {
@@ -263,19 +284,11 @@ module.exports = {
    * 删除文章标签连接
    */
   unlinkTagDocument (req, res) {
+    const tagDocument = req.data.tagDocument
 
-    Promise.props({
-      document: req.data.document,
-      tag: req.data.tag,
-    })
-    .then(({ document, tag }) => {
-      return TagDocument.destroy({
-        documentId: document.id,
-        tagId: tag.id,
-      })
-    })
-    .then(count => {
-      res.ok(count)
+    tagDocument.destroy()
+    .then(() => {
+      res.ok(tagDocument)
     })
     .catch(err => {
       log.verbose(`TagController.unlinkTagDocument :: ${err}`)

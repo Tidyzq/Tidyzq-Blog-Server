@@ -55,7 +55,7 @@ module.exports.http = {
             get: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'TagController.getTagsByDocument' ],
             post: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'TagController.linkDocumentWithTags' ],
             '/:tagId': {
-              delete: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'TagController.unlinkTagDocument' ],
+              delete: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'TagController.hasTagDocument', 'TagController.unlinkTagDocument' ],
             },
           },
         },

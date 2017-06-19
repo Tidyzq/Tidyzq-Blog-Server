@@ -1,6 +1,6 @@
 module.exports = {
   logger: {
-    level: 'silly',
+    level: 'error',
   },
   connection: {
     sqlite: {
