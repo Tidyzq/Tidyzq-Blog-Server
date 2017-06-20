@@ -28,6 +28,9 @@ module.exports.http = {
         '/login': {
           post: 'AuthController.login',
         },
+        '/check-login': {
+          get: [ 'AuthController.hasAccessToken', 'AuthController.checkLogin' ],
+        },
       },
       '/users': {
         get: [ 'AuthController.hasAccessToken', 'UserController.getUsers' ],

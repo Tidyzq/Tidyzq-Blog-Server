@@ -44,4 +44,11 @@ module.exports = {
     })(req, res, next)
   },
 
+  /**
+   * 检查登陆
+   */
+  checkLogin (req, res) {
+    res.ok()
+  },
+
 }

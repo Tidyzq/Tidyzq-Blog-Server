@@ -46,7 +46,7 @@ User.init = function () {
         password,
         email: 'admin@admin.com',
       })
-      return user.create()
+      return user.save()
     })
 }
 
