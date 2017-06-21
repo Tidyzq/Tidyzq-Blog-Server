@@ -1,4 +1,4 @@
-module.exports.http = {
+exports.http = {
 
   accessControl: {
     allowOrigin: '*',
@@ -11,10 +11,9 @@ module.exports.http = {
     'requestData',
     'response',
     'accessControl',
-    'cookieParser',
-    'bodyParser',
+    'jsonParser',
     'passport',
-    'powerdBy',
+    'poweredBy',
     // 'favicon',
     'static',
     'httpRouter',
@@ -92,6 +91,9 @@ module.exports.http = {
       },
       '/pages/:pageUrl': {
         get: [ 'PageController.hasPage', 'PageController.getPage' ],
+      },
+      '/images': {
+        post: [ 'AuthController.hasAccessToken', 'ImageController.extractFiles', 'ImageController.upload' ],
       },
     },
   },

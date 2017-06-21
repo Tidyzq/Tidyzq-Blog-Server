@@ -1,4 +1,4 @@
-module.exports.connection = {
+exports.connection = {
 
   sqlite: {
     file: 'storage/storage.sqlite',

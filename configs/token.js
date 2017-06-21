@@ -1,8 +1,8 @@
-module.exports.token = {
+exports.token = {
 
   expires: '2h',
 
-  secret: '22588c157798ef5a0462d33a670cab23', // random key
+  secret: 'examplesecret',
 
   algorithm: 'HS256',
 

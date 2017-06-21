@@ -4,4 +4,12 @@ const App = require('./app/index')
 
 const app = new App()
 
-app.start()
+let overrideConfig = {}
+
+try {
+  overrideConfig = require('./config.js')
+} catch (err) {
+  // ignore
+}
+
+app.start(overrideConfig)

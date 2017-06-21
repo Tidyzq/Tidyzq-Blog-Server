@@ -1,4 +1,4 @@
-module.exports.globals = {
+exports.globals = {
 
   app: true,
 

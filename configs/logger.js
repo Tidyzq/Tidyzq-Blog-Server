@@ -1,4 +1,4 @@
-module.exports.logger = {
+exports.logger = {
 
   level: 'info',
 

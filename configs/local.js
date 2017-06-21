@@ -8,4 +8,6 @@ module.exports = {
 
   'x-powered-by': false,
 
+  bodyLimit: '1024kb',
+
 }

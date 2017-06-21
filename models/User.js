@@ -1,6 +1,8 @@
 const { defineModel } = require('../utils/modelHelper')
 const bcrypt = require('bcrypt')
 
+const defaultUser = app.get('users').default
+
 const User = defineModel('Users', {
   fields: {
     id: {
@@ -38,15 +40,15 @@ const defaultInit = User.init
 
 User.init = function () {
   return defaultInit()
-    .then(() => bcrypt.genSalt(10))
-    .then(salt => bcrypt.hash('administrator', salt))
-    .then(password => {
-      const user = new User({
-        username: 'admin',
-        password,
-        email: 'admin@admin.com',
-      })
-      return user.save()
+    .then(() => User.findOne({ email: defaultUser.email }))
+    .then(user => {
+      if (!user) {
+        return bcrypt.genSalt(10)
+          .then(salt => bcrypt.hash(defaultUser.password, salt))
+          .then(password => {
+            return User.create(_.assign({ password }, defaultUser))
+          })
+      }
     })
 }
 
