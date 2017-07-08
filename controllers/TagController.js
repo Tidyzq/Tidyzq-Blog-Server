@@ -281,6 +281,64 @@ module.exports = {
   },
 
   /**
+   * 更新文章的所有连接
+   */
+  updateLinksWithTags (req, res) {
+    const document = req.data.document
+
+    Promise.resolve(req.body)
+      .then(tags => {
+        return Promise.props({
+          newTags: _.isArray(tags) ? tags : [],
+          oldTags: Document.find({
+            $where: { id: document.id },
+            $join: {
+              from: 'id',
+              to: 'id',
+              through: {
+                model: TagDocument,
+                from: 'documentId',
+                to: 'tagId',
+              },
+              target: Tag,
+            },
+          }).then(tags => tags.map(tag => tag.id)),
+        })
+      })
+      .then(({ newTags, oldTags }) => {
+        const unchangedTags = _.intersection(newTags, oldTags)
+        _.pullAll(newTags, unchangedTags)
+        _.pullAll(oldTags, unchangedTags)
+        return Promise.props({
+          destroy: oldTags.length && TagDocument.destroy({
+            tagId: {
+              $op: 'in',
+              $value: oldTags,
+            },
+            documentId: document.id,
+          }),
+          create: newTags.length && TagDocument.create(
+            _.compact(_.map(newTags, tagId => {
+              if (_.isInteger(tagId)) {
+                return new TagDocument({
+                  documentId: document.id,
+                  tagId,
+                })
+              }
+            }))
+          )
+        })
+      })
+      .then(result => {
+        res.ok(result)
+      })
+      .catch(err => {
+        log.verbose(`TagController.updateLinksWithTags :: ${err}`)
+        res.badRequest(err.message)
+      })
+  },
+
+  /**
    * 删除文章标签连接
    */
   unlinkTagDocument (req, res) {

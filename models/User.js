@@ -46,7 +46,7 @@ User.init = function () {
         return bcrypt.genSalt(10)
           .then(salt => bcrypt.hash(defaultUser.password, salt))
           .then(password => {
-            return User.create(_.assign({ password }, defaultUser))
+            return User.create([ _.assign({}, defaultUser, { password }) ])
           })
       }
     })

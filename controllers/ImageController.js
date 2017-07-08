@@ -12,6 +12,7 @@ module.exports = {
    * 上传图片
    */
   upload (req, res) {
+    log.silly(req.files)
     Promise.all(_.map(req.files, file => {
       return qiniuService.upload(file.originalname, file.buffer, file.mimeType)
     }))

@@ -118,7 +118,7 @@ module.exports = {
       })
       .catch(err => {
         log.verbose(`UserController.updateUser :: ${err}`)
-        res.badRequest(req.message)
+        res.badRequest(err.message)
       })
   },
 
@@ -134,7 +134,7 @@ module.exports = {
       })
       .catch(err => {
         log.verbose(`UserController.deleteUser :: ${err}`)
-        res.badRequest(req.message)
+        res.badRequest(err.message)
       })
   },
 
@@ -163,7 +163,7 @@ module.exports = {
       })
       .catch(err => {
         log.verbose(`UserController.updateUserPassword :: ${err}`)
-        res.badRequest(req.message)
+        res.badRequest(err.message)
       })
   },
 

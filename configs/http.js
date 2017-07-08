@@ -50,12 +50,13 @@ exports.http = {
         get: [ 'AuthController.hasAccessToken', 'DocumentController.getDocuments' ],
         post: [ 'AuthController.hasAccessToken', 'DocumentController.createDocument' ],
         '/:documentId': {
-          get: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'DocumentController.getDocument' ],
+          get: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.getDocument' ],
           put: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'DocumentController.updateDocument' ],
           delete: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'DocumentController.deleteDocument' ],
           '/tags': {
             get: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'TagController.getTagsByDocument' ],
             post: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'TagController.linkDocumentWithTags' ],
+            put: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'TagController.updateLinksWithTags' ],
             '/:tagId': {
               delete: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'TagController.hasTagDocument', 'TagController.unlinkTagDocument' ],
             },

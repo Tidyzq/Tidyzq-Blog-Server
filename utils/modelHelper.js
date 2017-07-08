@@ -174,13 +174,18 @@ function _solveWhereInner (fields, where, prefix, params = []) {
     result = _.compact(_.map(where.$conditions, item => _solveWhereInner(fields, item, prefix, params).sql)).join(op)
   } else {
     result = _.map(_.pick(_.pickBy(where, _.identity), fields), (value, key) => {
-      let op = '='
-      if (_.isObject(value)) {
-        op = value.$op || '='
-        value = value.$value
+      if (value.$op && value.$op.toLowerCase() === 'in') {
+        params.push.apply(params, value.$value)
+        return `${prefix}${key} IN (${_.fill(Array(value.$value.length), '?').join(',')})`
+      } else {
+        let op = '='
+        if (_.isObject(value)) {
+          op = value.$op || '='
+          value = value.$value
+        }
+        params.push(value)
+        return `${prefix}${key} ${op} ?`
       }
-      params.push(value)
-      return `${prefix}${key} ${op} ?`
     }).join(' AND ')
   }
   return {
