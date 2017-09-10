@@ -407,7 +407,6 @@ function solveSet (fields, set) {
 }
 
 function defineModel (tableName, options) {
-  /* eslint-disable no-eval */
   const { fields, indexes, methods, staticMethods } = options
 
   if (_.has(models, tableName)) {
@@ -434,13 +433,11 @@ function defineModel (tableName, options) {
   /**
    * mode.prototype.assign
    */
-  const assign = eval(`(function (data) {
-    ${
-      _.map(fields, (fieldConfig, field) => {
-        return `this.${field} = data.${field}`
-      }).join('\n')
-    }
-  })`)
+  const assign = new Function('data', `${
+    _.map(fields, (fieldConfig, field) => {
+      return `this.${field} = data.${field}`
+    }).join('\n')
+  }`)
 
   /**
    * model.init
@@ -626,7 +623,7 @@ function defineModel (tableName, options) {
   /**
    * model.prototype.update
    */
-  const update = eval(`(function () {
+  const update = new Function(`
     return model.update({${
       _.map(flattenKeys, key => {
         return `${key}: this.${key}`
@@ -636,7 +633,7 @@ function defineModel (tableName, options) {
         return `${key}: this.${key}`
       }).join(',')
     }})
-  })`)
+  `)
 
   /**
    * model.prototype.save
@@ -648,18 +645,18 @@ function defineModel (tableName, options) {
   /**
    * model.prototype.destroy
    */
-  const destroy = eval(`(function () {
+  const destroy = new Function(`
     return model.destroy({${
       _.map(flattenKeys, key => {
         return `${key}: this.${key}`
       }).join(',')
     }})
-  })`)
+  `)
 
   /**
    * model.prototype.toObject
    */
-  const toJSON = eval(`(function () {
+  const toJSON = new Function(`
     return _.omit(this, [${
       _.compact(_.map(fields, (field, fieldName) => {
         if (field.hide) {
@@ -667,7 +664,7 @@ function defineModel (tableName, options) {
         }
       })).join(',')
     }])
-  })`)
+  `)
 
   /**
    * model.prototype.toString
