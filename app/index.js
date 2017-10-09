@@ -51,7 +51,7 @@ class App {
         // merge configs
         configs = _.merge(configs.customConfigs, configs.env, configs.overrideConfigs)
         // apply config settings
-        for (var moduleName in configs) {
+        for (const moduleName in configs) {
           this.app.set(moduleName, configs[moduleName])
         }
         return configs

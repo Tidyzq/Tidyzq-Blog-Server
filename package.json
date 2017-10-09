@@ -13,6 +13,7 @@
     "body-parser": "~1.17.2",
     "captains-log": "^1.0.2",
     "cookie-parser": "~1.4.3",
+    "cos-nodejs-sdk-v5": "^2.0.12",
     "debug": "~2.6.8",
     "express": "~4.15.3",
     "include-all": "^4.0.3",
@@ -33,7 +34,7 @@
   "devDependencies": {
     "eslint": "^3.14.1",
     "eslint-config-standard": "^6.2.1",
-    "eslint-config-tidyzq": "git+ssh://git@github.com/tidyzq/eslint-config-tidyzq.git",
+    "eslint-config-tidyzq": "^1.0.1",
     "eslint-loader": "^1.6.1",
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-promise": "^3.4.0",

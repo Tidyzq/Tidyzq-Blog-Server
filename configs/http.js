@@ -93,8 +93,12 @@ exports.http = {
       '/pages/:pageUrl': {
         get: [ 'PageController.hasPage', 'PageController.getPage' ],
       },
-      '/images': {
-        post: [ 'AuthController.hasAccessToken', 'ImageController.extractFiles', 'ImageController.upload' ],
+      '/cos/token': {
+        get: [ 'AuthController.hasAccessToken', 'CosController.getToken' ],
+      },
+      '/settings': {
+        get: [ 'SettingController.getSettings' ],
+        put: [ 'AuthController.hasAccessToken', 'SettingController.updateSettings' ],
       },
     },
   },

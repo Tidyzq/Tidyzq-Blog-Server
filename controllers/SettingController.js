@@ -10,6 +10,7 @@ module.exports = {
       .then(settings => {
         return _.reduce(settings, (result, setting) => {
           result[setting.key] = JSON.parse(setting.value)
+          return result
         }, {})
       })
       .then(settings => {

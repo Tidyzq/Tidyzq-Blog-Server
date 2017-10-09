@@ -326,7 +326,7 @@ module.exports = {
                 })
               }
             }))
-          )
+          ),
         })
       })
       .then(result => {

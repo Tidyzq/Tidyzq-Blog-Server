@@ -1,0 +1,13 @@
+const COS = require('cos-nodejs-sdk-v5')
+const cosConfig = app.get('cos')
+const qcloudConfig = cosConfig.qcloud
+
+const cos = new COS({
+  AppId: qcloudConfig.appId,
+  SecretId: qcloudConfig.secretId,
+  SecretKey: qcloudConfig.secretKey,
+})
+
+exports.getAuth = function (method, key) {
+  return cos.getAuth({ Method: method, Key: key })
+}

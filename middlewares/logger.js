@@ -6,7 +6,7 @@ module.exports = function (req, res, next) {
     res.removeListener('close', afterResponse)
 
     req.endTime = new Date()
-    var duration = req.endTime.getTime() - req.startTime.getTime()
+    const duration = req.endTime.getTime() - req.startTime.getTime()
     log.verbose(res.statusCode, req.method, req.originalUrl, '-', duration, 'ms')
   }
 

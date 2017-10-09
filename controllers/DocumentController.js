@@ -137,7 +137,7 @@ module.exports = {
         res.ok(document)
       })
       .catch(err => {
-        log.verbose(`DocumentController.updateDocumentById :: ${err}`)
+        log.verbose(`DocumentController.updateDocumentById :: ${err}\n${err.stack}`)
         res.badRequest(err.message)
       })
   },

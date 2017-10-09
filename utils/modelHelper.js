@@ -1,3 +1,4 @@
+/* eslint no-eval: 'off' */
 const _ = require('lodash')
 // const Promise = require('bluebird')
 
@@ -433,11 +434,13 @@ function defineModel (tableName, options) {
   /**
    * mode.prototype.assign
    */
-  const assign = new Function('data', `${
-    _.map(fields, (fieldConfig, field) => {
-      return `this.${field} = data.${field}`
-    }).join('\n')
-  }`)
+  const assign = eval(`(function (data) {
+    ${
+      _.map(fields, (fieldConfig, field) => {
+        return `this.${field} = data.${field}`
+      }).join('\n')
+    }
+  })`)
 
   /**
    * model.init
@@ -623,7 +626,7 @@ function defineModel (tableName, options) {
   /**
    * model.prototype.update
    */
-  const update = new Function(`
+  const update = eval(`(function () {
     return model.update({${
       _.map(flattenKeys, key => {
         return `${key}: this.${key}`
@@ -633,7 +636,7 @@ function defineModel (tableName, options) {
         return `${key}: this.${key}`
       }).join(',')
     }})
-  `)
+  })`)
 
   /**
    * model.prototype.save
@@ -645,18 +648,18 @@ function defineModel (tableName, options) {
   /**
    * model.prototype.destroy
    */
-  const destroy = new Function(`
+  const destroy = eval(`(function () {
     return model.destroy({${
       _.map(flattenKeys, key => {
         return `${key}: this.${key}`
       }).join(',')
     }})
-  `)
+  })`)
 
   /**
    * model.prototype.toObject
    */
-  const toJSON = new Function(`
+  const toJSON = eval(`(function () {
     return _.omit(this, [${
       _.compact(_.map(fields, (field, fieldName) => {
         if (field.hide) {
@@ -664,7 +667,7 @@ function defineModel (tableName, options) {
         }
       })).join(',')
     }])
-  `)
+  })`)
 
   /**
    * model.prototype.toString
