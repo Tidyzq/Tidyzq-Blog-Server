@@ -1,7 +1,6 @@
 const User = app.models.User
 // const Document = app.models.document
 const bcrypt = require('bcrypt')
-const Promise = require('bluebird')
 
 module.exports = {
 
@@ -44,16 +43,16 @@ module.exports = {
    */
   getUsers (req, res) {
 
-    Promise.props({
-      users: User.find({
+    Promise.all([
+      User.find({
         $where: req.query.where,
         $limit: req.query.limit,
         $offset: req.query.offset,
         $sort: req.query.sort,
       }),
-      count: User.count({ $where: req.query.where }),
-    })
-    .then(({ users, count }) => {
+      User.count({ $where: req.query.where }),
+    ])
+    .then(([ users, count ]) => {
       res.set('X-Total-Count', count)
       res.ok(users)
     })
@@ -83,7 +82,7 @@ module.exports = {
    */
   createUser (req, res) {
     // 由请求参数构造待创建User对象
-    const user = new User(req.body)
+    const user = new User(_.pickBy(req.body, _.identity))
 
     bcrypt.genSalt(10)
       .then(salt => bcrypt.hash(user.password, salt))

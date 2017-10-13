@@ -1,6 +1,6 @@
 .DS_Store
 config.js
 node_modules/
-storage/
+storage/*
 npm-debug.log
 yarn-error.log

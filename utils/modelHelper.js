@@ -1,6 +1,5 @@
 /* eslint no-eval: 'off' */
 const _ = require('lodash')
-// const Promise = require('bluebird')
 
 function _notImplement () {
   throw new Error('Not Implemented')

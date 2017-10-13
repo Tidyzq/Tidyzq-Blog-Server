@@ -2,7 +2,6 @@ const express = require('express')
 const path = require('path')
 const http = require('http')
 
-const Promise = require('bluebird')
 const _ = require('lodash')
 const includeAll = require('include-all')
 const sqlite = require('sqlite3').verbose()
@@ -38,12 +37,8 @@ class App {
 
     overrideConfigs = overrideConfigs || {}
 
-    return Promise
-      .props({
-        customConfigs,
-        envConfigs,
-        overrideConfigs,
-      })
+    return Promise.all([ customConfigs, envConfigs, overrideConfigs ])
+      .then(([ customConfigs, envConfigs, overrideConfigs ]) => ({ customConfigs, envConfigs, overrideConfigs }))
       .then(configs => {
         const env = process.env.NODE_ENV || 'development'
         // select env config
@@ -98,9 +93,6 @@ class App {
     if (globalConfig.app) {
       global.app = this.app
     }
-    if (globalConfig.Promise) {
-      global.Promise = Promise
-    }
     if (globalConfig.log) {
       global.log = this.app.log
     }
@@ -114,13 +106,9 @@ class App {
 
     const log = require('captains-log')(this.app.get('logger'))
 
-    const components = {
-      log,
-    }
-
-    return Promise.props(components)
-      .then(components => {
-        this.app = _.merge(this.app, components)
+    return Promise.resolve()
+      .then(() => {
+        this.app.log = log
       })
   }
 
@@ -139,36 +127,6 @@ class App {
 
     // redis
     // TODO
-
-    // var mongoPath = 'mongodb://' + mongoConfig.host +
-    //     ':' + mongoConfig.port +
-    //     '/' + mongoConfig.database
-
-    // // connect to mongo database
-    // var tryMock = function () {
-    //   if (mongoConfig.mock) {
-    //     try {
-    //       var mockgoose = require('mockgoose')
-    //       return mockgoose(mongoose)
-    //         .then(function () {
-    //           app.log.verbose('Mock enabled, use memory as database.')
-    //         })
-    //     } catch (err) {
-    //       app.log.warn('Set "mock: true" in configs/connection.js but "mockgoose" is not installed.')
-    //     }
-    //   }
-    //   return Promise.resolve()
-    // }
-
-    // var connect = function () {
-    //   return mongoose.connect(mongoPath)
-    // }
-
-    // return tryMock()
-    //   .then(connect)
-    //   .then(function () {
-    //     app.log.info('Mongoose connected to', mongoPath)
-    //   })
   }
 
   initDatabase () {
@@ -178,7 +136,7 @@ class App {
       if (_.isFunction(model.init)) {
         return model.init()
       } else {
-        this.app.log.warn(`App.initDatabse :: model ${modelName}.init method not found`)
+        this.app.log.warn(`App.initDatabase :: model ${modelName}.init method not found`)
       }
     }))
   }

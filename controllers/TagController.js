@@ -2,7 +2,6 @@ const Tag = app.models.Tag
 const Document = app.models.Document
 const TagDocument = app.models.TagDocument
 const { generateUrl } = require('../utils/urlHelper')
-const Promise = require('bluebird')
 
 module.exports = {
 
@@ -32,16 +31,16 @@ module.exports = {
    */
   getTags (req, res) {
 
-    Promise.props({
-      tags: Tag.find({
+    Promise.all([
+      Tag.find({
         $where: req.query.where,
         $limit: req.query.limit,
         $offset: req.query.offset,
         $sort: req.query.where,
       }),
-      count: Tag.count({ $where: req.query.where }),
-    })
-      .then(({ tags, count }) => {
+      Tag.count({ $where: req.query.where }),
+    ])
+      .then(([ tags, count ]) => {
         res.set('X-Total-Count', count)
         res.ok(tags)
       })
@@ -70,7 +69,7 @@ module.exports = {
    * 创建标签
    */
   createTag (req, res) {
-    const tag = new Tag(req.body)
+    const tag = new Tag(_.pickBy(req.body, _.identity))
 
     return Promise.resolve()
       .then(() => {
@@ -139,8 +138,8 @@ module.exports = {
   getTagsByDocument (req, res) {
     const document = req.data.document
 
-    return Promise.props({
-      tags: Document.find({
+    return Promise.all([
+      Document.find({
         $where: { id: document.id },
         $join: {
           from: 'id',
@@ -156,7 +155,7 @@ module.exports = {
           sort: req.query.sort,
         },
       }),
-      count: Document.count({
+      Document.count({
         $where: { id: document.id },
         $join: {
           from: 'id',
@@ -169,8 +168,8 @@ module.exports = {
           target: Tag,
         },
       }),
-    })
-      .then(({ tags, count }) => {
+    ])
+      .then(([ tags, count ]) => {
         res.set('X-Total-Count', count)
         res.ok(tags)
       })
@@ -207,8 +206,8 @@ module.exports = {
   getTagsByPost (req, res) {
     const post = req.data.post
 
-    Promise.props({
-      tags: Document.find({
+    Promise.all([
+      Document.find({
         $where: { id: post.id },
         $join: {
           from: 'id',
@@ -224,7 +223,7 @@ module.exports = {
           sort: req.query.sort,
         },
       }),
-      count: Document.count({
+      Document.count({
         $where: { id: post.id },
         $join: {
           from: 'id',
@@ -237,8 +236,8 @@ module.exports = {
           target: Tag,
         },
       }),
-    })
-      .then(({ tags, count }) => {
+    ])
+      .then(([ tags, count ]) => {
         res.set('X-Total-Count', count)
         res.ok(tags)
       })
@@ -288,9 +287,9 @@ module.exports = {
 
     Promise.resolve(req.body)
       .then(tags => {
-        return Promise.props({
-          newTags: _.isArray(tags) ? tags : [],
-          oldTags: Document.find({
+        return Promise.all([
+          _.isArray(tags) ? tags : [],
+          Document.find({
             $where: { id: document.id },
             $join: {
               from: 'id',
@@ -303,21 +302,21 @@ module.exports = {
               target: Tag,
             },
           }).then(tags => tags.map(tag => tag.id)),
-        })
+        ])
       })
-      .then(({ newTags, oldTags }) => {
+      .then(([ newTags, oldTags ]) => {
         const unchangedTags = _.intersection(newTags, oldTags)
         _.pullAll(newTags, unchangedTags)
         _.pullAll(oldTags, unchangedTags)
-        return Promise.props({
-          destroy: oldTags.length && TagDocument.destroy({
+        return Promise.all([
+          oldTags.length && TagDocument.destroy({
             tagId: {
               $op: 'in',
               $value: oldTags,
             },
             documentId: document.id,
           }),
-          create: newTags.length && TagDocument.create(
+          newTags.length && TagDocument.create(
             _.compact(_.map(newTags, tagId => {
               if (_.isInteger(tagId)) {
                 return new TagDocument({
@@ -327,10 +326,10 @@ module.exports = {
               }
             }))
           ),
-        })
+        ])
       })
-      .then(result => {
-        res.ok(result)
+      .then(([ oldTags, newTags ]) => {
+        res.ok({ oldTags, newTags })
       })
       .catch(err => {
         log.verbose(`TagController.updateLinksWithTags :: ${err}`)

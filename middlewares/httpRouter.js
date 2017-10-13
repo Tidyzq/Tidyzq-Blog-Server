@@ -29,6 +29,10 @@ const buildRouter = function (prefix, path, config) {
         _.map(val, handlerPath => {
           const handler = _.get(controllers, handlerPath)
           if (!handler) { log.error(`Http Router Middleware :: ${handlerPath} not found`) }
+          // transform async function
+          if (Object.prototype.toString.call(handler) === '[object AsyncFunction]') {
+            return (...args) => handler.apply(null, args).catch(args[2]) // args[2] for next
+          }
           return handler
         }),
         _.isFunction)

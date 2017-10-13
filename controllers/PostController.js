@@ -2,7 +2,6 @@ const Post = app.models.Post
 const Document = app.models.Document
 const Tag = app.models.Tag
 const TagDocument = app.models.TagDocument
-const Promise = require('bluebird')
 
 module.exports = {
 
@@ -32,15 +31,15 @@ module.exports = {
    * 获取全部博文
    */
   getPosts (req, res) {
-    Promise.props({
-      posts: Post.find({
+    Promise.all([
+      Post.find({
         $limit: req.query.limit,
         $offset: req.query.offset,
         $sort: req.query.sort,
       }),
-      count: Post.count(),
-    })
-    .then(({ posts, count }) => {
+      Post.count(),
+    ])
+    .then(([ posts, count ]) => {
       res.set('X-Total-Count', count)
       res.ok(posts)
     })
@@ -56,18 +55,18 @@ module.exports = {
   getPostsByUser (req, res) {
     const id = req.params.userId
 
-    Promise.props({
-      posts: Post.find({
+    Promise.all([
+      Post.find({
         $where: { author: id },
         $limit: req.query.limit,
         $offset: req.query.offset,
         $sort: req.query.sort,
       }),
-      count: Post.count({
+      Post.count({
         author: id,
       }),
-    })
-    .then(({ posts, count }) => {
+    ])
+    .then(([ posts, count ]) => {
       res.set('X-Total-Count', count)
       res.ok(posts)
     })
@@ -102,8 +101,8 @@ module.exports = {
 
     Promise.resolve(req.data.tag)
     .then(tag => {
-      return Promise.props({
-        posts: Tag.find({
+      return Promise.all([
+        Tag.find({
           $where: { id: tag.id },
           $join: {
             from: 'id',
@@ -122,7 +121,7 @@ module.exports = {
             sort: req.query.sort,
           },
         }),
-        count: Tag.count({
+        Tag.count({
           $where: { id: tag.id },
           $join: {
             from: 'id',
@@ -138,9 +137,9 @@ module.exports = {
             },
           },
         }),
-      })
+      ])
     })
-    .then(({ posts, count }) => {
+    .then(([ posts, count ]) => {
       res.set('X-Total-Count', count)
       res.ok(posts)
     })
