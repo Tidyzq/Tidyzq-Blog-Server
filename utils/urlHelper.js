@@ -10,9 +10,9 @@ function secureUrl (string) {
 
   // Replace URL reserved chars: `@:/?#[]!$&()*+,;=` as well as `\%<>|^~£"{}'` and \`
   string = _.compact(string.split(/\s|\.|@|:|\/|\?|#|\[|\]|!|\$|&|\(|\)|\*|\+|,|;|=|\\|%|<|>|\||\^|~|"|\{|\}|`|'|–|—/g))
-      .join('-')
-      // Make the whole thing lowercase
-      .toLowerCase()
+    .join('-')
+    // Make the whole thing lowercase
+    .toLowerCase()
 
   // Handle whitespace at the beginning or end.
   string = string.trim()

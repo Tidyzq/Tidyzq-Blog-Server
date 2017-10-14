@@ -8,349 +8,319 @@ module.exports = {
   /**
    * 判断标签是否存在
    */
-  hasTag (req, res, next) {
-    Promise.resolve(req.data.tag)
-    .then(tag => {
-      return tag || Tag.findOne({ id: req.params.tagId, url: req.params.tagUrl })
-    })
-    .then(tag => {
+  async hasTag (req, res, next) {
+    try {
+      let tag = req.data.tag
       if (!tag) {
+        tag = await Tag.findOne({ id: req.params.tagId, url: req.params.tagUrl })
+      }
+      if (!tag) { // tag not exists
         throw new Error('tag not found.')
       }
       req.data.tag = tag
       next()
-    })
-    .catch(err => {
+    } catch (err) {
       log.verbose(`TagController.hasTag :: ${err}`)
       res.notFound(err.message)
-    })
+    }
   },
 
   /**
    * 获取所有标签
    */
-  getTags (req, res) {
+  async getTags (req, res) {
+    try {
+      const [ tags, count ] = await Promise.all([
+        Tag.find({
+          $where: req.query.where,
+          $limit: req.query.limit,
+          $offset: req.query.offset,
+          $sort: req.query.where,
+        }),
+        Tag.count({ $where: req.query.where }),
+      ])
 
-    Promise.all([
-      Tag.find({
-        $where: req.query.where,
-        $limit: req.query.limit,
-        $offset: req.query.offset,
-        $sort: req.query.where,
-      }),
-      Tag.count({ $where: req.query.where }),
-    ])
-      .then(([ tags, count ]) => {
-        res.set('X-Total-Count', count)
-        res.ok(tags)
-      })
-      .catch(err => {
-        log.verbose(`TagController.getTags :: ${err}`)
-        res.notFound(err.message)
-      })
+      res.set('X-Total-Count', count)
+      res.ok(tags)
+    } catch (err) {
+      log.verbose(`TagController.getTags :: ${err}`)
+      res.notFound(err.message)
+    }
   },
 
   /**
    * 获取标签详情
    */
   getTag (req, res) {
+    try {
+      const tag = req.data.tag
 
-    Promise.resolve(req.data.tag)
-      .then(tag => {
-        res.ok(tag)
-      })
-      .catch(err => {
-        log.verbose(`TagController.getTag :: ${err}`)
-        res.notFound(err.message)
-      })
+      res.ok(tag)
+    } catch (err) {
+      log.verbose(`TagController.getTag :: ${err}`)
+      res.notFound(err.message)
+    }
   },
 
   /**
    * 创建标签
    */
-  createTag (req, res) {
-    const tag = new Tag(_.pickBy(req.body, _.identity))
+  async createTag (req, res) {
+    try {
+      const tag = new Tag(_.pickBy(req.body, _.identity))
 
-    return Promise.resolve()
-      .then(() => {
-        if (_.isUndefined(tag.url) && tag.name) {
-          return generateUrl(Tag, tag.name)
-            .then(url => {
-              tag.url = url
-              log.verbose(`TagController :: generated url ${url}`)
-            })
-        }
-      })
-      .then(() => tag.create())
-      .then(id => {
-        tag.id = id
-      })
-      .then(() => {
-        res.ok(tag)
-      })
-      .catch(err => {
-        log.verbose(`TagController.createTag :: ${err}`)
-        res.badRequest(err.message)
-      })
+      if (_.isUndefined(tag.url) && tag.name) {
+        const url = await generateUrl(Tag, tag.name)
+        tag.url = url
+        log.verbose(`TagController :: generated url ${url}`)
+      }
+
+      tag.id = await tag.create()
+
+      res.ok(tag)
+    } catch (err) {
+      log.verbose(`TagController.createTag :: ${err}`)
+      res.badRequest(err.message)
+    }
   },
 
   /**
    * 修改标签
    */
-  updateTag (req, res) {
-    const value = _.pick(req.body, [ 'name', 'url' ])
+  async updateTag (req, res) {
+    try {
+      const value = _.pick(req.body, [ 'name', 'url' ])
+      const tag = _.assign(req.data.tag, value)
 
-    Promise.resolve(req.data.tag)
-      .then(tag => {
-        tag = _.assign(tag, value)
-        return tag.update().then(() => tag)
-      })
-      .then(tag => {
-        res.ok(tag)
-      })
-      .catch(err => {
-        log.verbose(`TagController.updateTag :: ${err}`)
-        res.badRequest(err.message)
-      })
+      await tag.update()
+
+      res.ok(tag)
+    } catch (err) {
+      log.verbose(`TagController.updateTag :: ${err}`)
+      res.badRequest(err.message)
+    }
   },
 
   /**
    * 删除标签
    */
-  deleteTag (req, res) {
+  async deleteTag (req, res) {
+    try {
+      const tag = req.data.tag
 
-    Promise.resolve(req.data.tag)
-      .then(tag => {
-        return tag.destroy().then(() => tag)
-      })
-      .then(tag => {
-        res.ok(tag)
-      })
-      .catch(err => {
-        log.verbose(`TagController.deleteTag :: ${err}`)
-        res.badRequest(err.message)
-      })
+      await tag.destroy()
+
+      res.ok(tag)
+    } catch (err) {
+      log.verbose(`TagController.deleteTag :: ${err}`)
+      res.badRequest(err.message)
+    }
   },
 
   /**
    * 获取文章所有标签
    */
-  getTagsByDocument (req, res) {
-    const document = req.data.document
+  async getTagsByDocument (req, res) {
+    try {
+      const document = req.data.document
+      const [ tags, count ] = await Promise.all([
+        Document.find({
+          $where: { id: document.id },
+          $join: {
+            from: 'id',
+            to: 'id',
+            through: {
+              model: TagDocument,
+              from: 'documentId',
+              to: 'tagId',
+            },
+            target: Tag,
+            limit: req.query.limit,
+            offset: req.query.offset,
+            sort: req.query.sort,
+          },
+        }),
+        Document.count({
+          $where: { id: document.id },
+          $join: {
+            from: 'id',
+            to: 'id',
+            through: {
+              model: TagDocument,
+              from: 'documentId',
+              to: 'tagId',
+            },
+            target: Tag,
+          },
+        }),
+      ])
 
-    return Promise.all([
-      Document.find({
-        $where: { id: document.id },
-        $join: {
-          from: 'id',
-          to: 'id',
-          through: {
-            model: TagDocument,
-            from: 'documentId',
-            to: 'tagId',
-          },
-          target: Tag,
-          limit: req.query.limit,
-          offset: req.query.offset,
-          sort: req.query.sort,
-        },
-      }),
-      Document.count({
-        $where: { id: document.id },
-        $join: {
-          from: 'id',
-          to: 'id',
-          through: {
-            model: TagDocument,
-            from: 'documentId',
-            to: 'tagId',
-          },
-          target: Tag,
-        },
-      }),
-    ])
-      .then(([ tags, count ]) => {
-        res.set('X-Total-Count', count)
-        res.ok(tags)
-      })
-      .catch(err => {
-        log.verbose(`TagController.getTagsByDocument :: ${err}`)
-        res.badRequest(err.message)
-      })
+      res.set('X-Total-Count', count)
+      res.ok(tags)
+    } catch (err) {
+      log.verbose(`TagController.getTagsByDocument :: ${err}`)
+      res.badRequest(err.message)
+    }
   },
 
   /**
    * 判断是否存在链接
    */
-  hasTagDocument (req, res, next) {
-    Promise.resolve(req.data.tagDocument)
-    .then(tagDocument => {
-      return tagDocument || TagDocument.findOne({ tagId: req.params.tagId, documentId: req.params.documentdId })
-    })
-    .then(tagDocument => {
+  async hasTagDocument (req, res, next) {
+    try {
+      let tagDocument = req.data.tagDocument
+      if (!tagDocument) {
+        tagDocument = await TagDocument.findOne({ tagId: req.params.tagId, documentId: req.params.documentdId })
+      }
       if (!tagDocument) {
         throw new Error('tagDocument not found.')
       }
       req.data.tagDocument = tagDocument
       next()
-    })
-    .catch(err => {
+    } catch (err) {
       log.verbose(`TagController.hasTagDocument :: ${err}`)
       res.notFound(err.message)
-    })
+    }
   },
 
   /**
    * 获取博文所有标签
    */
-  getTagsByPost (req, res) {
-    const post = req.data.post
+  async getTagsByPost (req, res) {
+    try {
+      const post = req.data.post
+      const [ tags, count ] = await Promise.all([
+        Document.find({
+          $where: { id: post.id },
+          $join: {
+            from: 'id',
+            to: 'id',
+            through: {
+              model: TagDocument,
+              from: 'documentId',
+              to: 'tagId',
+            },
+            target: Tag,
+            limit: req.query.limit,
+            offset: req.query.offset,
+            sort: req.query.sort,
+          },
+        }),
+        Document.count({
+          $where: { id: post.id },
+          $join: {
+            from: 'id',
+            to: 'id',
+            through: {
+              model: TagDocument,
+              from: 'documentId',
+              to: 'tagId',
+            },
+            target: Tag,
+          },
+        }),
+      ])
 
-    Promise.all([
-      Document.find({
-        $where: { id: post.id },
-        $join: {
-          from: 'id',
-          to: 'id',
-          through: {
-            model: TagDocument,
-            from: 'documentId',
-            to: 'tagId',
-          },
-          target: Tag,
-          limit: req.query.limit,
-          offset: req.query.offset,
-          sort: req.query.sort,
-        },
-      }),
-      Document.count({
-        $where: { id: post.id },
-        $join: {
-          from: 'id',
-          to: 'id',
-          through: {
-            model: TagDocument,
-            from: 'documentId',
-            to: 'tagId',
-          },
-          target: Tag,
-        },
-      }),
-    ])
-      .then(([ tags, count ]) => {
-        res.set('X-Total-Count', count)
-        res.ok(tags)
-      })
-      .catch(err => {
-        log.verbose(`TagController.getTagsByPost :: ${err}`)
-        res.badRequest(err.message)
-      })
+      res.set('X-Total-Count', count)
+      res.ok(tags)
+    } catch (err) {
+      log.verbose(`TagController.getTagsByPost :: ${err}`)
+      res.badRequest(err.message)
+    }
   },
 
   /**
    * 连接文章和许多标签
    */
-  linkDocumentWithTags (req, res) {
-    const document = req.data.document
+  async linkDocumentWithTags (req, res) {
+    try {
+      const document = req.data.document
+      const tags = _.isArray(req.body) ? req.body : []
 
-    Promise.resolve(req.body)
-      .then(tags => {
-        return _.isArray(tags) ? tags : []
-      })
-      .then(tags => {
-        return _.compact(_.map(tags, tag => {
-          if (_.isInteger(tag)) {
-            return new TagDocument({
-              documentId: document.id,
-              tagId: tag,
-            })
-          }
-        }))
-      })
-      .then(tagdocuments => {
-        return TagDocument.save(tagdocuments).then(() => tagdocuments)
-      })
-      .then(tagdocuments => {
-        res.ok(tagdocuments)
-      })
-      .catch(err => {
-        log.verbose(`TagController.linkDocumentWithTags :: ${err}`)
-        res.badRequest(err.message)
-      })
+      const tagDocuments = _.compact(_.map(tags, tag => {
+        if (_.isInteger(tag)) {
+          return new TagDocument({
+            documentId: document.id,
+            tagId: tag,
+          })
+        }
+      }))
+
+      await TagDocument.save(tagDocuments)
+
+      res.ok(tagDocuments)
+    } catch (err) {
+      log.verbose(`TagController.linkDocumentWithTags :: ${err}`)
+      res.badRequest(err.message)
+    }
   },
 
   /**
    * 更新文章的所有连接
    */
-  updateLinksWithTags (req, res) {
-    const document = req.data.document
+  async updateLinksWithTags (req, res) {
+    try {
+      const document = req.data.document
+      const newTags = _.isArray(req.body) ? req.body : []
+      const oldTags = await Document.find({
+        $where: { id: document.id },
+        $join: {
+          from: 'id',
+          to: 'id',
+          through: {
+            model: TagDocument,
+            from: 'documentId',
+            to: 'tagId',
+          },
+          target: Tag,
+        },
+      }).then(tags => tags.map(tag => tag.id))
 
-    Promise.resolve(req.body)
-      .then(tags => {
-        return Promise.all([
-          _.isArray(tags) ? tags : [],
-          Document.find({
-            $where: { id: document.id },
-            $join: {
-              from: 'id',
-              to: 'id',
-              through: {
-                model: TagDocument,
-                from: 'documentId',
-                to: 'tagId',
-              },
-              target: Tag,
-            },
-          }).then(tags => tags.map(tag => tag.id)),
-        ])
-      })
-      .then(([ newTags, oldTags ]) => {
-        const unchangedTags = _.intersection(newTags, oldTags)
-        _.pullAll(newTags, unchangedTags)
-        _.pullAll(oldTags, unchangedTags)
-        return Promise.all([
-          oldTags.length && TagDocument.destroy({
-            tagId: {
-              $op: 'in',
-              $value: oldTags,
-            },
-            documentId: document.id,
-          }),
-          newTags.length && TagDocument.create(
-            _.compact(_.map(newTags, tagId => {
-              if (_.isInteger(tagId)) {
-                return new TagDocument({
-                  documentId: document.id,
-                  tagId,
-                })
-              }
-            }))
-          ),
-        ])
-      })
-      .then(([ oldTags, newTags ]) => {
-        res.ok({ oldTags, newTags })
-      })
-      .catch(err => {
-        log.verbose(`TagController.updateLinksWithTags :: ${err}`)
-        res.badRequest(err.message)
-      })
+      const unchangedTags = _.intersection(newTags, oldTags)
+      _.pullAll(newTags, unchangedTags)
+      _.pullAll(oldTags, unchangedTags)
+
+      await Promise.all([
+        oldTags.length && TagDocument.destroy({
+          tagId: {
+            $op: 'in',
+            $value: oldTags,
+          },
+          documentId: document.id,
+        }),
+        newTags.length && TagDocument.create(
+          _.compact(_.map(newTags, tagId => {
+            if (_.isInteger(tagId)) {
+              return new TagDocument({
+                documentId: document.id,
+                tagId,
+              })
+            }
+          }))
+        ),
+      ])
+
+      res.ok({ oldTags, newTags })
+    } catch (err) {
+      log.verbose(`TagController.updateLinksWithTags :: ${err}`)
+      res.badRequest(err.message)
+    }
   },
 
   /**
    * 删除文章标签连接
    */
-  unlinkTagDocument (req, res) {
-    const tagDocument = req.data.tagDocument
+  async unlinkTagDocument (req, res) {
+    try {
+      const tagDocument = req.data.tagDocument
 
-    tagDocument.destroy()
-    .then(() => {
+      await tagDocument.destroy()
+
       res.ok(tagDocument)
-    })
-    .catch(err => {
+    } catch (err) {
       log.verbose(`TagController.unlinkTagDocument :: ${err}`)
       res.badRequest(err.message)
-    })
+    }
   },
 
 }

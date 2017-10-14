@@ -8,100 +8,94 @@ module.exports = {
   /**
    * 判断页面是否存在
    */
-  hasPost (req, res, next) {
-
-    Promise.resolve(req.data.post)
-    .then(post => {
-      return post || Post.findOne({ id: req.params.postId, url: req.params.postUrl })
-    })
-    .then(post => {
+  async hasPost (req, res, next) {
+    try {
+      let post = req.data.post
       if (!post) {
-        throw new Error('post not found.')
+        post = await Post.findOne({ id: req.params.postId, url: req.params.postUrl })
+      }
+      if (!post) {
+        return res.notFound('post not found.')
       }
       req.data.post = post
       next()
-    })
-    .catch(err => {
+    } catch (err) {
       log.verbose(`PostController.hasPost :: ${err}`)
       res.notFound(err.message)
-    })
+    }
   },
 
   /**
    * 获取全部博文
    */
-  getPosts (req, res) {
-    Promise.all([
-      Post.find({
-        $limit: req.query.limit,
-        $offset: req.query.offset,
-        $sort: req.query.sort,
-      }),
-      Post.count(),
-    ])
-    .then(([ posts, count ]) => {
+  async getPosts (req, res) {
+    try {
+      const [ posts, count ] = await Promise.all([
+        Post.find({
+          $limit: req.query.limit,
+          $offset: req.query.offset,
+          $sort: req.query.sort,
+        }),
+        Post.count(),
+      ])
+
       res.set('X-Total-Count', count)
       res.ok(posts)
-    })
-    .catch(err => {
+    } catch (err) {
       app.log.verbose(`PostController :: getPosts ${err}`)
       res.badRequest(err.message)
-    })
+    }
   },
 
   /**
    * 获取用户全部博文
    */
-  getPostsByUser (req, res) {
-    const id = req.params.userId
+  async getPostsByUser (req, res) {
+    try {
+      const id = req.params.userId
 
-    Promise.all([
-      Post.find({
-        $where: { author: id },
-        $limit: req.query.limit,
-        $offset: req.query.offset,
-        $sort: req.query.sort,
-      }),
-      Post.count({
-        author: id,
-      }),
-    ])
-    .then(([ posts, count ]) => {
+      const [ posts, count ] = await Promise.all([
+        Post.find({
+          $where: { author: id },
+          $limit: req.query.limit,
+          $offset: req.query.offset,
+          $sort: req.query.sort,
+        }),
+        Post.count({
+          author: id,
+        }),
+      ])
+
       res.set('X-Total-Count', count)
       res.ok(posts)
-    })
-    .catch(err => {
-      app.log.verbose(`PostController :: getPostsByUser ${err}`)
+    } catch (err) {
+      log.verbose(`PostController :: getPostsByUser ${err}`)
       res.badRequest(err.message)
-    })
+    }
   },
 
   /**
    * 获取博文详情
    */
   getPost (req, res) {
+    try {
+      const post = req.data.post
 
-    Promise.resolve(req.data.post)
-    .then(post => {
-      return post || Post.findOne({ id: req.params.postId, url: req.params.postUrl })
-    })
-    .then(post => {
       res.ok(post)
-    })
-    .catch(err => {
+    } catch (err) {
       app.log.verbose(`PostController :: getPostById ${err}`)
       res.notFound(err.message)
-    })
+    }
   },
 
   /**
    * 获取标签所有博文
    */
-  getPostsByTag (req, res) {
+  async getPostsByTag (req, res) {
+    try {
+      const tag = req.data.tag
 
-    Promise.resolve(req.data.tag)
-    .then(tag => {
-      return Promise.all([
+      const [ posts, count ] = await Promise.all([
         Tag.find({
           $where: { id: tag.id },
           $join: {
@@ -138,15 +132,13 @@ module.exports = {
           },
         }),
       ])
-    })
-    .then(([ posts, count ]) => {
+
       res.set('X-Total-Count', count)
       res.ok(posts)
-    })
-    .catch(err => {
+    } catch (err) {
       app.log.verbose(`PostController :: getPostsByTag ${err}`)
       res.notFound(err.message)
-    })
+    }
   },
 
 }

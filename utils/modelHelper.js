@@ -435,10 +435,10 @@ function defineModel (tableName, options) {
    */
   const assign = eval(`(function (data) {
     ${
-      _.map(fields, (fieldConfig, field) => {
-        return `this.${field} = data.${field}`
-      }).join('\n')
-    }
+  _.map(fields, (fieldConfig, field) => {
+    return `this.${field} = data.${field}`
+  }).join('\n')
+}
   })`)
 
   /**
@@ -454,26 +454,26 @@ function defineModel (tableName, options) {
       const params = fieldStates.params
       log.silly(sql, params)
       app.sqlite.run(sql, params,
-      err => {
-        err ? reject(err) : resolve()
-      })
+        err => {
+          err ? reject(err) : resolve()
+        })
     })
-    .then(() => {
+      .then(() => {
       // create indexes
-      return Promise.all(
-        _.map(indexes, ({ name, fields }) => {
-          return new Promise((resolve, reject) => {
-            const sql = `CREATE INDEX IF NOT EXISTS ${name} ON ${tableName} (
+        return Promise.all(
+          _.map(indexes, ({ name, fields }) => {
+            return new Promise((resolve, reject) => {
+              const sql = `CREATE INDEX IF NOT EXISTS ${name} ON ${tableName} (
               ${fields.join(',')}
             )`
-            log.silly(sql)
-            app.sqlite.run(sql, err => {
-              err ? reject(err) : resolve()
+              log.silly(sql)
+              app.sqlite.run(sql, err => {
+                err ? reject(err) : resolve()
+              })
             })
           })
-        })
-      )
-    })
+        )
+      })
   }
 
   /**
@@ -627,14 +627,14 @@ function defineModel (tableName, options) {
    */
   const update = eval(`(function () {
     return model.update({${
-      _.map(flattenKeys, key => {
-        return `${key}: this.${key}`
-      }).join(',')
-    }}, {${
-      _.map(_.xor(flattenKeys, flattenFields), key => {
-        return `${key}: this.${key}`
-      }).join(',')
-    }})
+  _.map(flattenKeys, key => {
+    return `${key}: this.${key}`
+  }).join(',')
+}}, {${
+  _.map(_.xor(flattenKeys, flattenFields), key => {
+    return `${key}: this.${key}`
+  }).join(',')
+}})
   })`)
 
   /**
@@ -649,10 +649,10 @@ function defineModel (tableName, options) {
    */
   const destroy = eval(`(function () {
     return model.destroy({${
-      _.map(flattenKeys, key => {
-        return `${key}: this.${key}`
-      }).join(',')
-    }})
+  _.map(flattenKeys, key => {
+    return `${key}: this.${key}`
+  }).join(',')
+}})
   })`)
 
   /**
@@ -660,12 +660,12 @@ function defineModel (tableName, options) {
    */
   const toJSON = eval(`(function () {
     return _.omit(this, [${
-      _.compact(_.map(fields, (field, fieldName) => {
-        if (field.hide) {
-          return `'${fieldName}'`
-        }
-      })).join(',')
-    }])
+  _.compact(_.map(fields, (field, fieldName) => {
+    if (field.hide) {
+      return `'${fieldName}'`
+    }
+  })).join(',')
+}])
   })`)
 
   /**

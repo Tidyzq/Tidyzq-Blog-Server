@@ -7,7 +7,7 @@ describe('/api/cos', () => {
     password: 'administrator',
   }
   let accessToken
-      // const wrongAccessToken = '1.2.3'
+  // const wrongAccessToken = '1.2.3'
 
   before(() => {
     return agent.post('/api/auth/login')
