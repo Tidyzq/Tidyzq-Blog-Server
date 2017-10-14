@@ -1,6 +1,6 @@
 const { defineModel } = require('../utils/modelHelper')
 
-module.exports = defineModel('Tags_Documents', {
+const TagDocument = defineModel('Tags_Documents', {
   fields: {
     tagId: {
       type: 'INTEGER',
@@ -16,3 +16,7 @@ module.exports = defineModel('Tags_Documents', {
     },
   },
 })
+
+app.initDatabase.push(TagDocument.init)
+
+module.exports = TagDocument

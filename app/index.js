@@ -1,6 +1,7 @@
 const express = require('express')
 const path = require('path')
 const http = require('http')
+// const EventEmitter = require('events')
 
 const _ = require('lodash')
 const includeAll = require('include-all')
@@ -61,55 +62,43 @@ class App {
     })
   }
 
-  loadControllers () {
-    const controllers = this.loadConfigFromDirectory('controllers')
-    this.app.controllers = controllers
-    return controllers
-  }
+  // loadControllers () {
+  //   const controllers = this.loadConfigFromDirectory('controllers')
+  //   this.app.controllers = controllers
+  //   return controllers
+  // }
 
-  loadModels () {
-    const models = this.loadConfigFromDirectory('models')
-    this.app.models = models
-    return models
-  }
+  // loadModels () {
+  //   const models = this.loadConfigFromDirectory('models')
+  //   this.app.models = models
+  //   return models
+  // }
 
-  loadServices () {
-    const services = this.loadConfigFromDirectory('services')
-    this.app.services = services
-    return services
-  }
+  // loadServices () {
+  //   const services = this.loadConfigFromDirectory('services')
+  //   this.app.services = services
+  //   return services
+  // }
 
-  loadMiddlewares () {
-    const middlewares = this.loadConfigFromDirectory('middlewares')
-    this.app.middlewares = middlewares
-    return middlewares
-  }
+  // loadMiddlewares () {
+  //   const middlewares = this.loadConfigFromDirectory('middlewares')
+  //   this.app.middlewares = middlewares
+  //   return middlewares
+  // }
 
   loadGlobals () {
-    const globalConfig = this.app.get('globals')
-
-    if (!_.isObject(globalConfig) || _.isEmpty(globalConfig)) { return }
-
-    if (globalConfig.app) {
-      global.app = this.app
-    }
-    if (globalConfig.log) {
-      global.log = this.app.log
-    }
-    if (globalConfig._) {
-      global._ = _
-    }
-    return globalConfig
+    global.app = this.app
+    global.log = this.app.log
+    global._ = _
   }
 
   loadComponents () {
 
-    const log = require('captains-log')(this.app.get('logger'))
+    this.app.log = require('captains-log')(this.app.get('logger'))
+    // this.app.event = new EventEmitter()
+    this.app.initDatabase = []
 
     return Promise.resolve()
-      .then(() => {
-        this.app.log = log
-      })
   }
 
   connectDatabase () {
@@ -130,31 +119,25 @@ class App {
   }
 
   initDatabase () {
-    const models = this.app.models || {}
+    const initHandlers = this.app.initDatabase || []
 
-    return Promise.all(_.map(models, (model, modelName) => {
-      if (_.isFunction(model.init)) {
-        return model.init()
+    return Promise.all(_.map(initHandlers, initHandler => {
+      if (_.isFunction(initHandler)) {
+        return initHandler()
       } else {
-        this.app.log.warn(`App.initDatabase :: model ${modelName}.init method not found`)
+        this.app.log.warn(`App.initDatabase :: invalid init ${initHandler}`)
       }
     }))
   }
 
   mountMiddlewares () {
-    const middlewareOrder = this.app.get('http').middlewares || [],
-      middlewares = this.app.middlewares || {},
+    const middlewares = this.app.get('http').middlewares || [],
       installed = []
 
-    for (const middlewareName of middlewareOrder) {
-      if (_.has(middlewares, middlewareName)) {
-        this.app.log.silly(`App.mountMiddlewares :: middleware ${middlewareName} installed`)
-        const middleware = middlewares[middlewareName]
-        this.app.use(middleware)
-        installed.push(middlewareName)
-      } else {
-        this.app.log.warn(`App.mountMiddlewares :: middleware' ${middlewareName} not found`)
-      }
+    for (const middleware of middlewares) {
+      this.app.log.silly(`App.mountMiddlewares :: middleware ${middleware.name} installed`)
+      this.app.use(middleware)
+      installed.push(middleware)
     }
     return Promise.resolve(installed)
   }
@@ -201,17 +184,22 @@ class App {
   }
 
   start (overrideConfig) {
-    return this.loadConfigs(overrideConfig)
+    return Promise.resolve()
+      .then(() => this.loadConfigs(overrideConfig))
       .then(() => this.loadComponents() )
       .then(() => this.loadGlobals() )
-      .then(() => this.loadModels() )
-      .then(() => this.loadServices() )
-      .then(() => this.loadControllers() )
-      .then(() => this.loadMiddlewares() )
+      // .then(() => this.loadModels() )
+      // .then(() => this.loadServices() )
+      // .then(() => this.loadControllers() )
+      // .then(() => this.loadMiddlewares() )
       .then(() => this.connectDatabase() )
-      .then(() => this.initDatabase() )
       .then(() => this.mountMiddlewares() )
+      .then(() => this.initDatabase() )
       .then(() => this.startServer() )
+      .catch(e => {
+        console.log(e.message, e.stack)
+        process.exit()
+      })
   }
 }
 

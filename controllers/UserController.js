@@ -1,5 +1,5 @@
-const User = app.models.User
-// const Document = app.models.document
+const User = require('../models/User')
+// const Document = require('../models/Document')
 const bcrypt = require('bcrypt')
 
 module.exports = {

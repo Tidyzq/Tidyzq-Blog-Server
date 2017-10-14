@@ -1,6 +1,5 @@
 const express = require('express')
 const _config = app.get('http').routes
-const controllers = app.controllers
 const Router = express.Router
 
 /**
@@ -26,9 +25,8 @@ const buildRouter = function (prefix, path, config) {
       app.log.silly(`Http Router Middleware :: Bind [${method}] ${prefix + path}`)
 
       const handlers = _.filter(
-        _.map(val, handlerPath => {
-          const handler = _.get(controllers, handlerPath)
-          if (!handler) { log.error(`Http Router Middleware :: ${handlerPath} not found`) }
+        _.map(val, handler => {
+          if (!_.isFunction(handler)) { return log.error(`Http Router Middleware :: invalid handler ${handler}`) }
           // transform async function
           if (Object.prototype.toString.call(handler) === '[object AsyncFunction]') {
             return (...args) => handler.apply(null, args).catch(args[2]) // args[2] for next
@@ -37,7 +35,7 @@ const buildRouter = function (prefix, path, config) {
         }),
         _.isFunction)
 
-      router[method].apply(router, _.concat(path, handlers))
+      router[method.toLowerCase()].apply(router, _.concat(path, handlers))
 
     } else if (_.isObject(val)) {
 

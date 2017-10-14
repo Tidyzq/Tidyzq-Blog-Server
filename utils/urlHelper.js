@@ -20,29 +20,17 @@ function secureUrl (string) {
   return string
 }
 
-function generateUrl (model, title) {
+async function generateUrl (model, title) {
   const url = secureUrl(title)
-  let postfix = 0
+  let postfix = -1, found = false, resultUrl = ''
 
-  const resultUrl = () => { return postfix ? `${url}-${postfix}` : url }
+  do {
+    postfix += 1
+    resultUrl = postfix ? `${url}-${postfix}` : url
+    found = await model.findOne({ url: resultUrl })
+  } while (found)
 
-  const find = () => {
-    return model.findOne({ url: resultUrl() })
-      .then(found => {
-        if (found) { throw new Error('Confilct Url') }
-      })
-  }
-
-  const generate = () => {
-    return find()
-      .then(() => resultUrl())
-      .catch(() => {
-        postfix += 1
-        return generate()
-      })
-  }
-
-  return generate()
+  return resultUrl
 }
 
 exports.secureUrl = secureUrl

@@ -1,6 +1,6 @@
 const { defineModel } = require('../utils/modelHelper')
 
-module.exports = defineModel('Documents', {
+const Document = defineModel('Documents', {
   fields: {
     id: {
       type: 'INTEGER',
@@ -47,3 +47,7 @@ module.exports = defineModel('Documents', {
     fields: [ 'author', 'type' ],
   }],
 })
+
+app.initDatabase.push(Document.init)
+
+module.exports = Document

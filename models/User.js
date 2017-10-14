@@ -38,18 +38,15 @@ const User = defineModel('Users', {
 
 const defaultInit = User.init
 
-User.init = function () {
-  return defaultInit()
-    .then(() => User.findOne({ email: defaultUser.email }))
-    .then(user => {
-      if (!user) {
-        return bcrypt.genSalt(10)
-          .then(salt => bcrypt.hash(defaultUser.password, salt))
-          .then(password => {
-            return User.create([ _.assign({}, defaultUser, { password }) ])
-          })
-      }
-    })
+User.init = async function () {
+  await defaultInit()
+  if (!await User.findOne({ email: defaultUser.email })) {
+    const salt = await bcrypt.genSalt(10)
+    const password = await bcrypt.hash(defaultUser.password, salt)
+    return await User.create([ _.assign({}, defaultUser, { password }) ])
+  }
 }
+
+app.initDatabase.push(User.init)
 
 module.exports = User

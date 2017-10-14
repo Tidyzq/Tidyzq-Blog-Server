@@ -1,4 +1,4 @@
-const Setting = app.models.Setting
+const Setting = require('../models/Setting')
 
 module.exports = {
 

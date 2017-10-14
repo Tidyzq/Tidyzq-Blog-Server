@@ -1,7 +1,7 @@
-const Post = app.models.Post
-const Document = app.models.Document
-const Tag = app.models.Tag
-const TagDocument = app.models.TagDocument
+const Post = require('../models/Post')
+const Document = require('../models/Document')
+const Tag = require('../models/Tag')
+const TagDocument = require('../models/TagDocument')
 
 module.exports = {
 

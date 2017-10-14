@@ -1,6 +1,6 @@
 const { defineModel } = require('../utils/modelHelper')
 
-module.exports = defineModel('Settings', {
+const Setting = defineModel('Settings', {
   fields: {
     key: {
       type: 'TEXT',
@@ -10,3 +10,7 @@ module.exports = defineModel('Settings', {
     value: 'TEXT',
   },
 })
+
+app.initDatabase.push(Setting.init)
+
+module.exports = Setting

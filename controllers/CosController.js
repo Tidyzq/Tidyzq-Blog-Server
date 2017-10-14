@@ -1,4 +1,4 @@
-const cosService = app.services.cos
+const cosService = require('../services/cos')
 
 module.exports = {
   /**

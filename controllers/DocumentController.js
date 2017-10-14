@@ -1,6 +1,6 @@
-const Document = app.models.Document
-const Tag = app.models.Tag
-const TagDocument = app.models.TagDocument
+const Document = require('../models/Document')
+const Tag = require('../models/Tag')
+const TagDocument = require('../models/TagDocument')
 const { generateUrl } = require('../utils/urlHelper')
 
 module.exports = {

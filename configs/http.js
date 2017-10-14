@@ -1,3 +1,4 @@
+
 exports.http = {
 
   accessControl: {
@@ -6,101 +7,112 @@ exports.http = {
     allowMethods: 'PUT,POST,GET,DELETE,OPTIONS',
   },
 
-  middlewares: [
-    'logger',
-    'requestData',
-    'response',
-    'accessControl',
-    'jsonParser',
-    'passport',
-    'poweredBy',
-    // 'favicon',
-    'static',
-    'httpRouter',
-    '404',
-    '500',
-  ],
+  get middlewares () {
+    return [
+      require('../middlewares/logger'),
+      require('../middlewares/requestData'),
+      require('../middlewares/response'),
+      require('../middlewares/accessControl'),
+      require('../middlewares/jsonParser'),
+      require('../middlewares/passport'),
+      require('../middlewares/poweredBy'),
+      // require('../middlewares/favicon'),
+      require('../middlewares/static'),
+      require('../middlewares/httpRouter'),
+      require('../middlewares/404'),
+      require('../middlewares/500'),
+    ]
+  },
 
-  routes: {
-    '/api': {
-      '/auth': {
-        '/login': {
-          post: 'AuthController.login',
-        },
-        '/check-login': {
-          get: [ 'AuthController.hasAccessToken', 'AuthController.checkLogin' ],
-        },
-      },
-      '/users': {
-        get: [ 'AuthController.hasAccessToken', 'UserController.getUsers' ],
-        post: [ 'AuthController.hasAccessToken', 'UserController.createUser' ],
-        '/:userId': {
-          get: [ 'UserController.hasUser', 'UserController.getUser' ],
-          put: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.hasUser', 'UserController.updateUser' ],
-          delete: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.hasUser', 'UserController.deleteUser' ],
-          '/password': {
-            put: [ 'AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.hasUser', 'UserController.updateUserPassword' ],
+  get routes () {
+    const AuthController = require('../controllers/AuthController')
+    const CosController = require('../controllers/CosController')
+    const DocumentController = require('../controllers/DocumentController')
+    const PageController = require('../controllers/PageController')
+    const PostController = require('../controllers/PostController')
+    const SettingController = require('../controllers/SettingController')
+    const TagController = require('../controllers/TagController')
+    const UserController = require('../controllers/UserController')
+    return {
+      '/api': {
+        '/auth': {
+          '/login': {
+            POST: [ AuthController.login ],
           },
-          '/posts': {
-            get: [ 'UserController.hasUser', 'PostController.getPostsByUser' ],
+          '/check-login': {
+            GET: [ AuthController.hasAccessToken, AuthController.checkLogin ],
           },
         },
-      },
-      '/documents': {
-        get: [ 'AuthController.hasAccessToken', 'DocumentController.getDocuments' ],
-        post: [ 'AuthController.hasAccessToken', 'DocumentController.createDocument' ],
-        '/:documentId': {
-          get: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.getDocument' ],
-          put: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'DocumentController.updateDocument' ],
-          delete: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'DocumentController.deleteDocument' ],
-          '/tags': {
-            get: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'TagController.getTagsByDocument' ],
-            post: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'TagController.linkDocumentWithTags' ],
-            put: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'TagController.updateLinksWithTags' ],
-            '/:tagId': {
-              delete: [ 'AuthController.hasAccessToken', 'DocumentController.hasDocument', 'DocumentController.isAuthor', 'TagController.hasTagDocument', 'TagController.unlinkTagDocument' ],
+        '/users': {
+          GET: [ AuthController.hasAccessToken, UserController.getUsers ],
+          POST: [ AuthController.hasAccessToken, UserController.createUser ],
+          '/:userId': {
+            GET: [ UserController.hasUser, UserController.getUser ],
+            PUT: [ AuthController.hasAccessToken, UserController.isSelf, UserController.hasUser, UserController.updateUser ],
+            DELETE: [ AuthController.hasAccessToken, UserController.isSelf, UserController.hasUser, UserController.deleteUser ],
+            '/password': {
+              PUT: [ AuthController.hasAccessToken, UserController.isSelf, UserController.hasUser, UserController.updateUserPassword ],
+            },
+            '/posts': {
+              GET: [ UserController.hasUser, PostController.getPostsByUser ],
             },
           },
         },
-      },
-      '/tags': {
-        get: [ 'AuthController.hasAccessToken', 'TagController.getTags' ],
-        post: [ 'AuthController.hasAccessToken', 'TagController.createTag' ],
-        '/id/:tagId': {
-          get: [ 'AuthController.hasAccessToken', 'TagController.hasTag', 'TagController.getTag' ],
-          put: [ 'AuthController.hasAccessToken', 'TagController.hasTag', 'TagController.updateTag' ],
-          delete: [ 'AuthController.hasAccessToken', 'TagController.hasTag', 'TagController.deleteTag' ],
-          '/documents': {
-            get: [ 'AuthController.hasAccessToken', 'TagController.hasTag', 'DocumentController.getDocumentsByTag' ],
+        '/documents': {
+          GET: [ AuthController.hasAccessToken, DocumentController.getDocuments ],
+          POST: [ AuthController.hasAccessToken, DocumentController.createDocument ],
+          '/:documentId': {
+            GET: [ AuthController.hasAccessToken, DocumentController.hasDocument, DocumentController.getDocument ],
+            PUT: [ AuthController.hasAccessToken, DocumentController.hasDocument, DocumentController.isAuthor, DocumentController.updateDocument ],
+            DELETE: [ AuthController.hasAccessToken, DocumentController.hasDocument, DocumentController.isAuthor, DocumentController.deleteDocument ],
+            '/tags': {
+              GET: [ AuthController.hasAccessToken, DocumentController.hasDocument, TagController.getTagsByDocument ],
+              POST: [ AuthController.hasAccessToken, DocumentController.hasDocument, DocumentController.isAuthor, TagController.linkDocumentWithTags ],
+              PUT: [ AuthController.hasAccessToken, DocumentController.hasDocument, DocumentController.isAuthor, TagController.updateLinksWithTags ],
+              '/:tagId': {
+                DELETE: [ AuthController.hasAccessToken, DocumentController.hasDocument, DocumentController.isAuthor, TagController.hasTagDocument, TagController.unlinkTagDocument ],
+              },
+            },
           },
         },
-        '/url/:tagUrl': {
-          get: [ 'TagController.hasTag', 'TagController.getTag' ],
-          '/posts': {
-            get: [ 'TagController.hasTag', 'PostController.getPostsByTag' ],
+        '/tags': {
+          GET: [ AuthController.hasAccessToken, TagController.getTags ],
+          POST: [ AuthController.hasAccessToken, TagController.createTag ],
+          '/id/:tagId': {
+            GET: [ AuthController.hasAccessToken, TagController.hasTag, TagController.getTag ],
+            PUT: [ AuthController.hasAccessToken, TagController.hasTag, TagController.updateTag ],
+            DELETE: [ AuthController.hasAccessToken, TagController.hasTag, TagController.deleteTag ],
+            '/documents': {
+              GET: [ AuthController.hasAccessToken, TagController.hasTag, DocumentController.getDocumentsByTag ],
+            },
+          },
+          '/url/:tagUrl': {
+            GET: [ TagController.hasTag, TagController.getTag ],
+            '/posts': {
+              GET: [ TagController.hasTag, PostController.getPostsByTag ],
+            },
           },
         },
-      },
-      '/posts': {
-        get: [ 'PostController.getPosts' ],
-        '/:postUrl': {
-          get: [ 'PostController.hasPost', 'PostController.getPost' ],
-          '/tags': {
-            get: [ 'PostController.hasPost', 'TagController.getTagsByPost' ],
+        '/posts': {
+          GET: [ PostController.getPosts ],
+          '/:postUrl': {
+            GET: [ PostController.hasPost, PostController.getPost ],
+            '/tags': {
+              GET: [ PostController.hasPost, TagController.getTagsByPost ],
+            },
           },
         },
+        '/pages/:pageUrl': {
+          GET: [ PageController.hasPage, PageController.getPage ],
+        },
+        '/cos/token': {
+          GET: [ AuthController.hasAccessToken, CosController.getToken ],
+        },
+        '/settings': {
+          GET: [ SettingController.getSettings ],
+          PUT: [ AuthController.hasAccessToken, SettingController.updateSettings ],
+        },
       },
-      '/pages/:pageUrl': {
-        get: [ 'PageController.hasPage', 'PageController.getPage' ],
-      },
-      '/cos/token': {
-        get: [ 'AuthController.hasAccessToken', 'CosController.getToken' ],
-      },
-      '/settings': {
-        get: [ 'SettingController.getSettings' ],
-        put: [ 'AuthController.hasAccessToken', 'SettingController.updateSettings' ],
-      },
-    },
+    }
   },
-
 }

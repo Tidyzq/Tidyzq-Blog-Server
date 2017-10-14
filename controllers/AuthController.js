@@ -1,5 +1,5 @@
 const passport = require('passport')
-const TokenService = app.services.token
+const TokenService = require('../services/token')
 
 module.exports = {
 

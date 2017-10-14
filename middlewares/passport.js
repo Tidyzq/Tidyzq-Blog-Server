@@ -4,14 +4,15 @@ const jwtStrategy = require('passport-jwt').Strategy
 const bcrypt = require('bcrypt')
 
 const tokenConfig = app.get('token')
-const jwtFromRequest = app.services.token.extractTokenFromHeader
+const jwtFromRequest = require('../services/token').extractTokenFromHeader
+const User = require('../models/User')
 
 passport.serializeUser((user, done) => {
   done(null, user.id)
 })
 
 passport.deserializeUser((id, done) => {
-  app.models.User.findOne({ id })
+  User.findOne({ id })
     .then(user => done(null, user))
     .catch(err => done(err))
 })
@@ -23,7 +24,7 @@ passport.use(new localStrategy(
   },
   (email, password, done) => {
 
-    app.models.User.findOne({ email })
+    User.findOne({ email })
       // 检查用户是否存在
       .then(user => {
         if (!user) { throw new Error('No Such User.') }
@@ -51,7 +52,7 @@ passport.use(new jwtStrategy(
     algorithm: tokenConfig.algorithm,
   },
   ({ id }, done) => {
-    app.models.User.findOne({ id })
+    User.findOne({ id })
       .then(user => {
         if (!user) { throw new Error('No Such User.') }
         return user
