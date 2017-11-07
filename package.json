@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "start": "node app.js",
+    "dev": "nodemon app.js",
     "test": "eslint ./ && mocha tests/main.test.js tests/**/*.test.js"
   },
   "dependencies": {
@@ -36,6 +37,7 @@
     "eslint-plugin-import": "^2.7.0",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
+    "nodemon": "^1.12.1",
     "mocha": "^4.0.1",
     "supertest": "^3.0.0"
   },

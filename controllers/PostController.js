@@ -32,6 +32,7 @@ module.exports = {
     try {
       const [ posts, count ] = await Promise.all([
         Post.find({
+          $where: null,
           $limit: req.query.limit,
           $offset: req.query.offset,
           $sort: req.query.sort,
