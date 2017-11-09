@@ -1,4 +1,6 @@
+const log = require('../services/log')
 const User = require('../models/User')
+const _ = require('lodash')
 // const Document = require('../models/Document')
 const bcrypt = require('bcrypt')
 

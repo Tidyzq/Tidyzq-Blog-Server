@@ -1,3 +1,5 @@
+const log = require('../services/log')
+const _ = require('lodash')
 const Document = require('../models/Document')
 const Tag = require('../models/Tag')
 const TagDocument = require('../models/TagDocument')

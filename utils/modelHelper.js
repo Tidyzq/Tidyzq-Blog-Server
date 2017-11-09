@@ -1,4 +1,6 @@
 /* eslint no-eval: 'off' */
+const log = require('../services/log')
+const dao = require('../services/dao')
 const _ = require('lodash')
 
 function _notImplement () {
@@ -453,7 +455,7 @@ function defineModel (tableName, options) {
       )`
       const params = fieldStates.params
       log.silly(sql, params)
-      app.sqlite.run(sql, params,
+      dao.run(sql, params,
         err => {
           err ? reject(err) : resolve()
         })
@@ -467,7 +469,7 @@ function defineModel (tableName, options) {
               ${fields.join(',')}
             )`
               log.silly(sql)
-              app.sqlite.run(sql, err => {
+              dao.run(sql, err => {
                 err ? reject(err) : resolve()
               })
             })
@@ -494,7 +496,7 @@ function defineModel (tableName, options) {
 
     log.silly(sql, params)
     return new Promise((resolve, reject) => {
-      app.sqlite.all(sql, params, (err, rows) => {
+      dao.all(sql, params, (err, rows) => {
         err ? reject(err) : resolve(_.map(rows, row => new target(row)))
       })
     })
@@ -518,7 +520,7 @@ function defineModel (tableName, options) {
 
     log.silly(sql, params)
     return new Promise((resolve, reject) => {
-      app.sqlite.get(sql, params, (err, row) => {
+      dao.get(sql, params, (err, row) => {
         err ? reject(err) : resolve(row && new target(row))
       })
     })
@@ -544,7 +546,7 @@ function defineModel (tableName, options) {
 
     log.silly(sql, params)
     return new Promise((resolve, reject) => {
-      app.sqlite.get(sql, params, (err, row) => {
+      dao.get(sql, params, (err, row) => {
         err ? reject(err) : resolve(row['COUNT(*)'])
       })
     })
@@ -560,7 +562,7 @@ function defineModel (tableName, options) {
     const params = where.params
     log.silly(sql, params)
     return new Promise((resolve, reject) => {
-      app.sqlite.run(sql, params, function (err) {
+      dao.run(sql, params, function (err) {
         err ? reject(err) : resolve(this.changes)
       })
     })
@@ -577,7 +579,7 @@ function defineModel (tableName, options) {
     const params = _.concat(set.params, where.params)
     log.silly(sql, params)
     return new Promise((resolve, reject) => {
-      app.sqlite.run(sql, params, function (err) {
+      dao.run(sql, params, function (err) {
         err ? reject(err) : resolve(this.changes)
       })
     })
@@ -593,7 +595,7 @@ function defineModel (tableName, options) {
     const params = values.params
     log.silly(sql, params)
     return new Promise((resolve, reject) => {
-      app.sqlite.run(sql, params, function (err) {
+      dao.run(sql, params, function (err) {
         err ? reject(err) : resolve(this.lastID)
       })
     })
@@ -609,7 +611,7 @@ function defineModel (tableName, options) {
     const params = values.params
     log.silly(sql, params)
     return new Promise((resolve, reject) => {
-      app.sqlite.run(sql, params, function (err) {
+      dao.run(sql, params, function (err) {
         err ? reject(err) : resolve(this.lastID)
       })
     })

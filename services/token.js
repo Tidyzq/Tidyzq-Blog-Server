@@ -1,5 +1,8 @@
 const jwt = require('jsonwebtoken')
-const tokenConfig = app.get('token')
+const log = require('./log')
+const tokenConfig = require('../configs').token
+
+const { headerField, headerScheme, secret, algorithm, expires } = tokenConfig
 
 const extractRegex = /^(\S+)\s+(\S+)$/
 
@@ -10,7 +13,7 @@ const tokenService = {
    */
   extractTokenFromHeader (req) {
 
-    const authorization = req.get(tokenConfig.headerField)
+    const authorization = req.get(headerField)
     if (!authorization) {
       log.verbose('No Authorization Header')
       return null
@@ -23,7 +26,7 @@ const tokenService = {
     }
 
     const [ , schema, value ] = matches
-    if (schema !== tokenConfig.headerScheme) {
+    if (schema !== headerScheme) {
       log.verbose('Invalid Authorization Scheme')
       return null
     }
@@ -38,12 +41,12 @@ const tokenService = {
       {
         id: user.id,
       },
-      tokenConfig.secret,
+      secret,
       {
-        algorithm: tokenConfig.algorithm,
-        expiresIn: tokenConfig.expires,
-        // issuer: tokenConfig.issuer,
-        // audience: tokenConfig.audience
+        algorithm,
+        expiresIn: expires,
+        // issuer: issuer,
+        // audience: audience
       }
     )
   },
@@ -53,7 +56,7 @@ const tokenService = {
    */
   verifyAccessToken (token) {
     return new Promise((resolve, reject) => {
-      jwt.verify(token, tokenConfig.secret, (err, decoded) => {
+      jwt.verify(token, secret, (err, decoded) => {
         if (err) { return reject(err) }
         resolve(decoded)
       })

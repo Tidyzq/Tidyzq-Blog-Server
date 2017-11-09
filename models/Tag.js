@@ -1,3 +1,4 @@
+const initQueue = require('../services/initQueue')
 const { defineModel } = require('../utils/modelHelper')
 
 const Tag = defineModel('Tags', {
@@ -23,6 +24,6 @@ const Tag = defineModel('Tags', {
   }],
 })
 
-app.initDatabase.push(Tag.init)
+initQueue.push(Tag.init)
 
 module.exports = Tag

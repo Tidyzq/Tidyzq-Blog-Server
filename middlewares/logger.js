@@ -1,3 +1,5 @@
+const log = require('../services/log')
+
 module.exports = function (req, res, next) {
   function afterResponse () {
     res.finished = true
@@ -7,7 +9,7 @@ module.exports = function (req, res, next) {
 
     req.endTime = new Date()
     const duration = req.endTime.getTime() - req.startTime.getTime()
-    log.verbose(res.statusCode, req.method, req.originalUrl, '-', duration, 'ms')
+    log.verbose(`${res.statusCode} ${req.method} ${req.originalUrl} -${duration}ms`)
   }
 
   if (!res.finished) {

@@ -1,3 +1,5 @@
+const log = require('../services/log')
+const _ = require('lodash')
 const Page = require('../models/Page')
 
 module.exports = {
@@ -31,7 +33,7 @@ module.exports = {
 
       res.ok(page)
     } catch (err) {
-      app.log.verbose(`PageController :: getPage ${err}`)
+      log.verbose(`PageController :: getPage ${err}`)
       res.notFound(err.message)
     }
   },

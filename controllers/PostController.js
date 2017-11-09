@@ -1,3 +1,5 @@
+const log = require('../services/log')
+const _ = require('lodash')
 const Post = require('../models/Post')
 const Document = require('../models/Document')
 const Tag = require('../models/Tag')
@@ -43,7 +45,7 @@ module.exports = {
       res.set('X-Total-Count', count)
       res.ok(posts)
     } catch (err) {
-      app.log.verbose(`PostController :: getPosts ${err}`)
+      log.verbose(`PostController :: getPosts ${err}`)
       res.badRequest(err.message)
     }
   },
@@ -84,7 +86,7 @@ module.exports = {
 
       res.ok(post)
     } catch (err) {
-      app.log.verbose(`PostController :: getPostById ${err}`)
+      log.verbose(`PostController :: getPostById ${err}`)
       res.notFound(err.message)
     }
   },
@@ -137,7 +139,7 @@ module.exports = {
       res.set('X-Total-Count', count)
       res.ok(posts)
     } catch (err) {
-      app.log.verbose(`PostController :: getPostsByTag ${err}`)
+      log.verbose(`PostController :: getPostsByTag ${err}`)
       res.notFound(err.message)
     }
   },

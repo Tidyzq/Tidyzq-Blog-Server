@@ -1,3 +1,5 @@
+// const log = require('../services/log')
+// const _ = require('lodash')
 const passport = require('passport')
 const TokenService = require('../services/token')
 
@@ -6,42 +8,43 @@ module.exports = {
   /**
    * 检查请求是否附带了合法的 access token
    */
-  hasAccessToken (req, res, next) {
-    passport.authenticate('jwt', (err, user, fail) => {
-      if (!user && !err && fail) {
-        err = fail
-      }
-      if (err) {
-        log.verbose(`AuthController.hasAccessToken :: ${err}`)
-        return res.unauthorized(err.message)
-      }
-      req.data.auth = user
-      next()
-    })(req, res, next)
+  async hasAccessToken (req, res, next) {
+    const { user, fail } = await new Promise((resolve, reject) => {
+      passport.authenticate('jwt', (err, user, fail) => {
+        if (err) { return reject(err) }
+        resolve({ user, fail })
+      })(req, res, next)
+    })
+
+    if (fail) {
+      return res.unauthorized(fail.message)
+    }
+    req.data.auth = user
+    next()
   },
 
   /**
    * 登陆
    */
-  login (req, res, next) {
-    passport.authenticate('local', function (err, user, fail) {
-      if (!user && !err && fail) {
-        err = fail
-      }
-      if (err) {
-        log.verbose(`AuthController.login :: ${err}`)
-        return res.badRequest(err.message)
-      }
+  async login (req, res, next) {
+    const { user, fail } = await new Promise((resolve, reject) => {
+      passport.authenticate('local', function (err, user, fail) {
+        if (err) { reject(err) }
+        resolve({ user, fail })
+      })(req, res, next)
+    })
 
-      const accessToken = TokenService.createAccessToken(user)
+    if (fail) {
+      return res.badRequest(fail.message)
+    }
 
-      // 将 token 作为 http body 返回
-      return res.ok({
-        user,
-        accessToken,
-      })
+    const accessToken = TokenService.createAccessToken(user)
 
-    })(req, res, next)
+    // 将 token 作为 http body 返回
+    return res.ok({
+      user,
+      accessToken,
+    })
   },
 
   /**

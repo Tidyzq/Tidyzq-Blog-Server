@@ -1,5 +1,5 @@
 const COS = require('cos-nodejs-sdk-v5')
-const cosConfig = app.get('cos')
+const cosConfig = require('../configs').cos
 const qcloudConfig = cosConfig.qcloud
 
 const cos = new COS({

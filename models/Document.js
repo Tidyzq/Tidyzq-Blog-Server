@@ -1,3 +1,4 @@
+const initQueue = require('../services/initQueue')
 const { defineModel } = require('../utils/modelHelper')
 
 const Document = defineModel('Documents', {
@@ -48,6 +49,6 @@ const Document = defineModel('Documents', {
   }],
 })
 
-app.initDatabase.push(Document.init)
+initQueue.push(Document.init)
 
 module.exports = Document

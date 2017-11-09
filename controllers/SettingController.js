@@ -1,3 +1,5 @@
+const log = require('../services/log')
+const _ = require('lodash')
 const Setting = require('../models/Setting')
 
 module.exports = {
@@ -16,7 +18,7 @@ module.exports = {
 
       res.ok(settings)
     } catch (err) {
-      app.log.verbose(`SettingController :: getSettings ${err}`)
+      log.verbose(`SettingController :: getSettings ${err}`)
       res.badRequest(err.message)
     }
   },
@@ -42,7 +44,7 @@ module.exports = {
 
       res.ok()
     } catch (err) {
-      app.log.verbose(`SettingController :: updateSettings ${err}`)
+      log.verbose(`SettingController :: updateSettings ${err}`)
       res.badRequest(err.message)
     }
   },

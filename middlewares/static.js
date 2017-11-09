@@ -1,1 +1,4 @@
-module.exports = require('express').static(app.get('static'))
+const express = require('express')
+const staticConfig = require('../configs').static
+
+module.exports = express.static(staticConfig)

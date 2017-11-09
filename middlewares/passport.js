@@ -3,7 +3,7 @@ const localStrategy = require('passport-local').Strategy
 const jwtStrategy = require('passport-jwt').Strategy
 const bcrypt = require('bcrypt')
 
-const tokenConfig = app.get('token')
+const tokenConfig = require('../configs').token
 const jwtFromRequest = require('../services/token').extractTokenFromHeader
 const User = require('../models/User')
 
@@ -11,10 +11,13 @@ passport.serializeUser((user, done) => {
   done(null, user.id)
 })
 
-passport.deserializeUser((id, done) => {
-  User.findOne({ id })
-    .then(user => done(null, user))
-    .catch(err => done(err))
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findOne({ id })
+    done(null, user)
+  } catch (err) {
+    done(err)
+  }
 })
 
 passport.use(new localStrategy(
@@ -22,26 +25,24 @@ passport.use(new localStrategy(
     usernameField: 'email',
     passwordField: 'password',
   },
-  (email, password, done) => {
+  async (email, password, done) => {
+    try {
+      const user = await User.findOne({ email })
 
-    User.findOne({ email })
+      if (!user) {
       // 检查用户是否存在
-      .then(user => {
-        if (!user) { throw new Error('No Such User.') }
-        return user
-      })
+        return done(null, false, new Error('No Such User.'))
+      }
+      if (!await bcrypt.compare(password, user.password)) {
       // 检查用户密码是否正确
-      .then(user => {
-        return bcrypt.compare(password, user.password)
-          .then(result => {
-            if (!result) { throw new Error('Invalid Password.') }
-            return user
-          })
-      })
+        return done(null, false, new Error('Invalid Password.'))
+      }
+
       // 验证完成，返回用户信息
-      .then(user => done(null, user))
-      // 验证失败，返回错误信息
-      .catch(done)
+      done(null, user)
+    } catch (err) {
+      done(err)
+    }
   }
 ))
 
@@ -51,14 +52,18 @@ passport.use(new jwtStrategy(
     jwtFromRequest,
     algorithm: tokenConfig.algorithm,
   },
-  ({ id }, done) => {
-    User.findOne({ id })
-      .then(user => {
-        if (!user) { throw new Error('No Such User.') }
-        return user
-      })
-      .then(user => done(null, user))
-      .catch(done)
+  async ({ id }, done) => {
+    try {
+      const user = await User.findOne({ id })
+
+      if (!user) {
+        return done(null, false, new Error('No Such User.'))
+      }
+
+      done(null, user)
+    } catch (err) {
+      done(err)
+    }
   }
 ))
 

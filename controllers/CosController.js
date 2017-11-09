@@ -1,3 +1,5 @@
+const log = require('../services/log')
+const _ = require('lodash')
 const cosService = require('../services/cos')
 
 module.exports = {

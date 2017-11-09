@@ -16,6 +16,7 @@
     "cos-nodejs-sdk-v5": "^2.0.13",
     "debug": "~3.1.0",
     "express": "~4.16.2",
+    "glob": "^7.1.2",
     "include-all": "^4.0.3",
     "jsonwebtoken": "^8.1.0",
     "lodash": "^4.17.4",
@@ -28,7 +29,8 @@
     "skipper": "^0.8.2",
     "sqlite3": "^3.1.13",
     "stream-buffers": "^3.0.1",
-    "unidecode": "^0.1.8"
+    "unidecode": "^0.1.8",
+    "winston": "^2.4.0"
   },
   "devDependencies": {
     "eslint": "^4.8.0",

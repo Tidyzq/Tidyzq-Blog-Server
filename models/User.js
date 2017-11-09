@@ -1,7 +1,9 @@
+const initQueue = require('../services/initQueue')
+const _ = require('lodash')
 const { defineModel } = require('../utils/modelHelper')
 const bcrypt = require('bcrypt')
 
-const defaultUser = app.get('users').default
+const defaultUser = require('../configs').users.default
 
 const User = defineModel('Users', {
   fields: {
@@ -47,6 +49,6 @@ User.init = async function () {
   }
 }
 
-app.initDatabase.push(User.init)
+initQueue.push(User.init)
 
 module.exports = User

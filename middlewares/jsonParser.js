@@ -1,3 +1,5 @@
+const { bodyLimit } = require('../configs')
+
 module.exports = require('body-parser').json({
-  limit: app.get('bodyLimit'),
+  limit: bodyLimit,
 })

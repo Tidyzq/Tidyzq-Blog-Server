@@ -1,3 +1,4 @@
+const initQueue = require('../services/initQueue')
 const { defineModel } = require('../utils/modelHelper')
 
 const Setting = defineModel('Settings', {
@@ -11,6 +12,6 @@ const Setting = defineModel('Settings', {
   },
 })
 
-app.initDatabase.push(Setting.init)
+initQueue.push(Setting.init)
 
 module.exports = Setting

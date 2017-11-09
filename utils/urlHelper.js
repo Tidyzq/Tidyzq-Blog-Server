@@ -1,3 +1,4 @@
+// const log = require('../services/log')
 const _ = require('lodash')
 const unidecode = require('unidecode')
 
